@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Técnico - Equipe Rafael Barros V31.0</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #0284c7; }
+        h1 { border-bottom: 2px solid #0284c7; padding-bottom: 10px; }
+        .section { margin-bottom: 40px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        code { background: #e0f2fe; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: #0369a1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+        th { background: #f1f5f9; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; margin: 10px 0; }
+        @media print {
+            body { padding: 0; }
+            .section { break-inside: avoid; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Manual do Sistema & Especificação Técnica</h1>
+    <p><strong>Sistema:</strong> Equipe Rafael Barros V31.0<br><strong>Objetivo:</strong> Guia de uso e especificação para migração backend.</p>
+
+    <div class="section">
+        <h2>1. Visão Geral</h2>
+        <p>Aplicação Single Page (SPA) em React com TypeScript. Atualmente utiliza <code>localStorage</code> para persistência de dados (Client-Side). O objetivo da migração para o backend é centralizar estes dados em um banco SQL/NoSQL e prover uma API segura.</p>
+    </div>
+
+    <div class="section">
+        <h2>2. Estrutura de Dados (Schema)</h2>
+        <p>As seguintes chaves são utilizadas no armazenamento local e representam as tabelas necessárias no banco de dados:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Entidade / Chave</th>
+                    <th>Descrição</th>
+                    <th>Relacionamentos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>equipe_rafael_barros_students</code></td>
+                    <td>Cadastro de alunos, dados financeiros e responsáveis.</td>
+                    <td>1:N com Agendamentos, N:1 com Filial e Terapeuta</td>
+                </tr>
+                <tr>
+                    <td><code>equipe_rafael_barros_team</code></td>
+                    <td>Cadastro de colaboradores (terapeutas e staff).</td>
+                    <td>N:1 com Filial</td>
+                </tr>
+                <tr>
+                    <td><code>equipe_rafael_barros_users_db</code></td>
+                    <td>Credenciais de acesso (Login).</td>
+                    <td>Vinculado ao StaffMember</td>
+                </tr>
+                <tr>
+                    <td><code>equipe_rafael_barros_branches</code></td>
+                    <td>Filiais da clínica (Multi-tenancy).</td>
+                    <td>Entidade Raiz</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>3. Pontos de Atenção para o Backend</h2>
+        <div class="warning">
+            <strong>Segurança:</strong> A API Key do Google Gemini está exposta no frontend atualmente. No backend, ela deve ser movida para variáveis de ambiente do servidor e acessada via Proxy/Endpoint dedicado.
+        </div>
+        <ul>
+            <li><strong>Autenticação:</strong> Implementar JWT (JSON Web Tokens). O frontend já possui um <code>AuthContext</code> preparado para receber tokens.</li>
+            <li><strong>Uploads:</strong> Implementar rota de upload de arquivos (S3/Blob Storage) para substituir os URLs locais simulados (<code>URL.createObjectURL</code>).</li>
+            <li><strong>Agendamento:</strong> A lógica de conflito de horários deve ser validada no servidor para evitar <em>race conditions</em>.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>4. Guia de Funcionalidades (Testes)</h2>
+        <ul>
+            <li><strong>Dashboard:</strong> Verifique se os totais financeiros batem com a soma das transações no banco.</li>
+            <li><strong>Financeiro:</strong> Teste a criação de uma fatura e a mudança de status para "Pago". Verifique se o recibo PDF é gerado com os dados corretos.</li>
+            <li><strong>IA:</strong> Teste a geração de relatórios na aba do aluno. O backend deve receber o histórico em texto e devolver a análise do Gemini.</li>
+        </ul>
+    </div>
+
+    <p style="text-align: center; margin-top: 40px; font-size: 0.8rem; color: #666;">Documento gerado automaticamente pelo sistema.</p>
+</body>
+</html>

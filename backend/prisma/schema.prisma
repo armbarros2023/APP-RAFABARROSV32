@@ -1,0 +1,399 @@
+// This is your Prisma schema file for ClinicFlow/RafaBarros
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USUÁRIOS E AUTENTICAÇÃO
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // bcrypt hash
+  role      UserRole @default(THERAPIST)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  activityLogs StudentActivityLog[]
+  mediaUploads StudentMedia[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  THERAPIST
+}
+
+// ============================================
+// FILIAIS
+// ============================================
+
+model Branch {
+  id                String   @id @default(uuid())
+  name              String
+  address           String?
+  phone             String?
+  cnpj              String?  @unique
+  stateRegistration String?
+  email             String?
+  responsible       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  staffMembers         StaffMember[]
+  students             Student[]
+  appointments         Appointment[]
+  financialTransactions FinancialTransaction[]
+  studentInvoices      StudentInvoice[]
+  therapistPayments    TherapistPayment[]
+  initialAssessments   InitialAssessment[]
+
+  @@map("branches")
+}
+
+// ============================================
+// EQUIPE/TERAPEUTAS
+// ============================================
+
+model StaffMember {
+  id              String       @id @default(uuid())
+  branchId        String
+  name            String
+  role            String
+  email           String       @unique
+  secondaryEmail  String?
+  phone           String?
+  status          StaffStatus  @default(ACTIVE)
+  avatarUrl       String?
+  specialty       String?
+  bankInfo        String?      // JSON string for bank details
+  contractUrl     String?
+  admissionDate   DateTime?
+  terminationDate DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  branch       Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  students     Student[]
+  appointments Appointment[]
+  payments     TherapistPayment[]
+  assessments  InitialAssessment[]
+
+  @@map("staff_members")
+}
+
+enum StaffStatus {
+  ACTIVE
+  ON_VACATION
+  INACTIVE
+}
+
+// ============================================
+// ALUNOS/PACIENTES
+// ============================================
+
+model Student {
+  id                String        @id @default(uuid())
+  branchId          String
+  therapistId       String
+  name              String
+  avatarUrl         String?
+  dateOfBirth       DateTime?
+  guardianName      String?
+  guardianPhone     String?
+  guardianEmail     String?
+  status            StudentStatus @default(ACTIVE)
+  lastActivityDate  DateTime?
+  wantsMonthlyNFe   Boolean       @default(false)
+  rg                String?
+  cpf               String?       @unique
+  address           String?
+  neighborhood      String?
+  city              String?
+  postalCode        String?
+  
+  // Plan Information
+  sessionsPerMonth  Int?          // 4, 8, 12, 16, 20
+  monthlyValue      Float?
+  paymentMethod     PaymentMethod?
+  taxPercentage     Float?
+  planObservations  String?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  branch           Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  therapist        StaffMember           @relation(fields: [therapistId], references: [id])
+  appointments     Appointment[]
+  invoices         StudentInvoice[]
+  activityLogs     StudentActivityLog[]
+  media            StudentMedia[]
+  assessments      InitialAssessment[]
+  transactions     FinancialTransaction[]
+
+  @@map("students")
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PaymentMethod {
+  PIX
+  DEBITO
+  CREDITO_RECORRENTE
+  FIDELIDADE_TRIMESTRAL
+  FIDELIDADE_SEMESTRAL
+  FIDELIDADE_ANUAL
+}
+
+// ============================================
+// AGENDAMENTOS
+// ============================================
+
+model Appointment {
+  id                  String            @id @default(uuid())
+  branchId            String
+  therapistId         String?
+  studentId           String?
+  dateTime            DateTime
+  studentName         String
+  therapistName       String?
+  service             String
+  status              AppointmentStatus @default(SCHEDULED)
+  notes               String?
+  cancellationReason  String?
+  cancelledBy         String?           // 'student', 'therapist', 'admin'
+  reminderSent        Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  branch    Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  therapist StaffMember? @relation(fields: [therapistId], references: [id])
+  student   Student?     @relation(fields: [studentId], references: [id])
+
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  PENDING_ACCEPTANCE
+}
+
+// ============================================
+// GESTÃO FINANCEIRA
+// ============================================
+
+model FinancialTransaction {
+  id             String              @id @default(uuid())
+  branchId       String
+  studentId      String?
+  date           DateTime
+  description    String
+  amount         Float               // Gross value
+  taxPercentage  Float?
+  type           TransactionType
+  category       FinancialCategory
+  status         TransactionStatus   @default(PENDING)
+  nfeNumber      String?
+  dueDate        DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  // Relations
+  branch  Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  student Student? @relation(fields: [studentId], references: [id])
+
+  @@map("financial_transactions")
+}
+
+enum TransactionType {
+  REVENUE
+  EXPENSE
+}
+
+enum FinancialCategory {
+  RECEITA_ATENDIMENTO
+  RECEITA_CURSO
+  RECEITA_KIT
+  CUSTO_FIXO
+  CUSTO_VARIAVEL
+  INVESTIMENTO
+  CAPITAL_GIRO
+}
+
+enum TransactionStatus {
+  PAID
+  PENDING
+}
+
+// ============================================
+// FATURAMENTO DE ALUNOS
+// ============================================
+
+model StudentInvoice {
+  id          String        @id @default(uuid())
+  studentId   String
+  branchId    String
+  issueDate   DateTime
+  dueDate     DateTime
+  amount      Float
+  status      InvoiceStatus @default(PENDING)
+  paymentLink String?
+  receiptUrl  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@map("student_invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+// ============================================
+// PAGAMENTO DE TERAPEUTAS
+// ============================================
+
+model TherapistPayment {
+  id                String        @id @default(uuid())
+  therapistId       String
+  branchId          String
+  therapistName     String
+  period            String        // e.g., "2024-07"
+  sessionsConducted Int
+  amount            Float
+  status            PaymentStatus @default(PENDING)
+  invoiceUrl        String?       // Therapist's invoice
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  therapist StaffMember @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+  branch    Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@map("therapist_payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+// ============================================
+// TRIAGEM/AVALIAÇÃO INICIAL
+// ============================================
+
+model InitialAssessment {
+  id            String           @id @default(uuid())
+  studentId     String?          // Pode ser null até o aluno ser registrado
+  studentName   String
+  guardianEmail String?
+  guardianPhone String?
+  branchId      String
+  therapistId   String
+  dateTime      DateTime
+  status        AssessmentStatus @default(SCHEDULED)
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  branch    Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  therapist StaffMember  @relation(fields: [therapistId], references: [id])
+  student   Student?     @relation(fields: [studentId], references: [id])
+
+  @@map("initial_assessments")
+}
+
+enum AssessmentStatus {
+  SCHEDULED
+  COMPLETED
+}
+
+// ============================================
+// LOGS DE ATIVIDADES DOS ALUNOS
+// ============================================
+
+model StudentActivityLog {
+  id          String   @id @default(uuid())
+  studentId   String
+  therapistId String
+  date        DateTime
+  description String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  therapist User    @relation(fields: [therapistId], references: [id])
+
+  @@map("student_activity_logs")
+}
+
+// ============================================
+// MÍDIAS DOS ALUNOS
+// ============================================
+
+model StudentMedia {
+  id          String    @id @default(uuid())
+  studentId   String
+  therapistId String
+  uploadDate  DateTime  @default(now())
+  url         String
+  type        MediaType
+  description String
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  therapist User    @relation(fields: [therapistId], references: [id])
+
+  @@map("student_media")
+}
+
+enum MediaType {
+  VIDEO
+  IMAGE
+  DOCUMENT
+}
+
+// ============================================
+// ATIVIDADES EXTERNAS
+// ============================================
+
+model ExternalActivity {
+  id          String   @id @default(uuid())
+  name        String
+  date        DateTime
+  revenue     Float
+  expenses    Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("external_activities")
+}

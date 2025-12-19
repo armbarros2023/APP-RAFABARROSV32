@@ -1,0 +1,73 @@
+#!/usr/bin/expect -f
+
+# Script de deploy automático com senha
+set timeout -1
+
+# Variáveis
+set vps_host "69.62.103.58"
+set vps_user "root"
+set vps_pass "B075@#ax/980tec"
+set local_path "/Users/arbtechinfo.ia/Projetos 2025/app-rafabarrosv32/backend"
+set remote_path "/var/www/clinicrafabarros-backend"
+
+puts "🚀 Iniciando deploy do backend...\n"
+
+# Compactar arquivos
+puts "📦 Compactando arquivos..."
+cd $local_path
+exec tar -czf /tmp/backend-deploy.tar.gz \
+  --exclude='node_modules' \
+  --exclude='dist' \
+  --exclude='*.tar.gz' \
+  prisma src package.json tsconfig.json .env
+
+# Copiar para VPS
+puts "📤 Enviando para VPS..."
+spawn scp /tmp/backend-deploy.tar.gz ${vps_user}@${vps_host}:/tmp/
+expect {
+    "password:" {
+        send "$vps_pass\r"
+        exp_continue
+    }
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+    eof
+}
+
+# Extrair na VPS
+puts "📂 Extraindo na VPS..."
+spawn ssh ${vps_user}@${vps_host}
+expect {
+    "password:" {
+        send "$vps_pass\r"
+    }
+    "yes/no" {
+        send "yes\r"
+        exp_continue
+    }
+}
+
+expect "# "
+send "cd $remote_path\r"
+expect "# "
+send "tar -xzf /tmp/backend-deploy.tar.gz\r"
+expect "# "
+send "rm /tmp/backend-deploy.tar.gz\r"
+expect "# "
+send "ls -la\r"
+expect "# "
+send "exit\r"
+
+puts "\n✅ Deploy concluído!"
+puts "\nPróximos passos na VPS:"
+puts "1. ssh root@69.62.103.58"
+puts "2. cd /var/www/clinicrafabarros-backend"
+puts "3. npm install"
+puts "4. npx prisma generate"
+puts "5. npx prisma db push"
+puts "6. npm run dev"
+
+# Limpar
+exec rm /tmp/backend-deploy.tar.gz
