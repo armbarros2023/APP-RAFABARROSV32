@@ -1,0 +1,53 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🔄 ATUALIZANDO BACKEND (CORREÇÃO LOGIN)"
+puts "=====================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+puts "\nEnviando arquivo corrigido...\n"
+# Vou usar cat para editar o arquivo remoto com o conteúdo local, 
+# mas como já editei localmente, é melhor enviar via SCP.
+# Mas estou dentro do expect... vou sair e usar scp.
+send "exit\r"
+expect eof
+
+spawn scp backend/src/controllers/authController.ts root@69.62.103.58:/root/clinicrafabarros/src/controllers/
+
+expect "password:"
+send "$password\r"
+
+expect eof
+
+# Agora reconectar para buildar
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+puts "\nRecompilando Backend...\n"
+send "npm run build\r"
+set timeout 60
+expect "root@"
+
+puts "\nReiniciando PM2...\n"
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+puts "\n=====================================\n"
+puts "✅ BACKEND ATUALIZADO!\n"
+
+send "exit\r"
+expect eof

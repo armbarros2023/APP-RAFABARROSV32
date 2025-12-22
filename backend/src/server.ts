@@ -1,14 +1,34 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
 
+// Trust Proxy (necessário para Rate Limit atrás de Nginx/Reverse Proxy)
+app.set('trust proxy', 1);
+
 // ============================================
 // MIDDLEWARE
 // ============================================
+
+// Security headers
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // limite de 100 requisições por IP
+    message: 'Muitas requisições deste IP, tente novamente mais tarde.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Aplicar rate limiting em todas as rotas da API
+app.use('/api/', limiter);
 
 // CORS
 app.use(cors({

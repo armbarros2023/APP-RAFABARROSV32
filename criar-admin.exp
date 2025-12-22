@@ -1,0 +1,86 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🔧 CORRIGINDO USUÁRIO ADMIN"
+puts "============================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+# Criar script Node.js para criar usuário
+send "cd /root/clinicrafabarros && cat > create-admin.js << 'JSEOF'\r"
+send "require('dotenv').config();\r"
+send "const \{ PrismaClient \} = require('@prisma/client');\r"
+send "const bcrypt = require('bcrypt');\r"
+send "\r"
+send "const prisma = new PrismaClient();\r"
+send "\r"
+send "async function createAdmin() \{\r"
+send "  try \{\r"
+send "    const hashedPassword = await bcrypt.hash('483220', 10);\r"
+send "    console.log('Hash criado');\r"
+send "    \r"
+send "    await prisma.user.deleteMany(\{\r"
+send "      where: \{ email: 'armbrros2023@gmail.com' \}\r"
+send "    \});\r"
+send "    console.log('Usuários antigos removidos');\r"
+send "    \r"
+send "    const admin = await prisma.user.create(\{\r"
+send "      data: \{\r"
+send "        name: 'Armando de Barros',\r"
+send "        email: 'armbrros2023@gmail.com',\r"
+send "        password: hashedPassword,\r"
+send "        role: 'ADMIN',\r"
+send "        active: true\r"
+send "      \}\r"
+send "    \});\r"
+send "    \r"
+send "    console.log('Admin criado:', admin.email, admin.role);\r"
+send "    \r"
+send "    const allUsers = await prisma.user.findMany();\r"
+send "    console.log('Total usuarios:', allUsers.length);\r"
+send "    allUsers.forEach(u => console.log('  User:', u.email, u.role, u.active));\r"
+send "    \r"
+send "  \} catch (error) \{\r"
+send "    console.error('ERRO:', error.message);\r"
+send "    console.error(error);\r"
+send "  \} finally \{\r"
+send "    await prisma.\\\$disconnect();\r"
+send "  \}\r"
+send "\}\r"
+send "\r"
+send "createAdmin();\r"
+send "JSEOF\r"
+expect "root@"
+
+puts "\n✓ Script criado\n"
+
+# Executar script
+send "node create-admin.js\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Script executado\n"
+
+# Reiniciar backend
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+send "sleep 3\r"
+expect "root@"
+
+# Testar login
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}'\r"
+expect "root@"
+
+puts "\n============================\n"
+puts "✅ CONCLUÍDO!\n"
+
+send "exit\r"
+expect eof

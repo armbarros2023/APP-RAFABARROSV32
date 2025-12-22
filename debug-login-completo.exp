@@ -1,0 +1,65 @@
+#!/usr/bin/expect -f
+
+set timeout 120
+set password "B075@#ax/980tec"
+
+puts "🔧 DEPLOY DEBUG & RESET SENHA"
+puts "===============================\n"
+
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+send "exit\r"
+expect eof
+
+# 1. Enviar arquivos
+puts "\n1. Enviando arquivos..."
+spawn scp backend/src/controllers/authController.ts reset-password-force.js root@69.62.103.58:/root/clinicrafabarros/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 2. Conectar e executar
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+# Mover controller pro lugar certo
+send "mv authController.ts src/controllers/\r"
+expect "root@"
+
+# 3. Executar Reset de Senha
+puts "\n2. Resetando senha no banco..."
+send "node reset-password-force.js\r"
+expect "root@"
+
+# 4. Rebuildar Backend
+puts "\n3. Recompilando Backend..."
+send "npm run build\r"
+expect "root@"
+
+# 5. Reiniciar PM2
+puts "\n4. Reiniciando PM2..."
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+# 6. Monitorar Logs e Fazer Teste
+puts "\n5. Testando Login Local... (Observe os logs)"
+# Iniciar logs em background (não dá pra fazer fácil via expect interativo assim, melhor rodar o teste e depois ver logs com --lines)
+
+# Teste CURL
+send "curl -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}'\r"
+expect "root@"
+
+puts "\n\n6. Verificando Logs do Teste..."
+send "pm2 logs clinicrafabarros-api --lines 20 --nostream\r"
+expect "root@"
+
+puts "\n===============================\n"
+send "exit\r"
+expect eof

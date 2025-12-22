@@ -35,7 +35,8 @@ apiClient.interceptors.response.use(
             // Token inválido ou expirado
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            // Não forçar recarregamento da página, deixar o estado do React lidar com isso
+            // window.location.href = '/login'; 
         }
         return Promise.reject(error);
     }

@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+set password "B075@#ax/980tec"
+
+puts "🧪 TESTE DE AUTENTICAÇÃO E PERFIL"
+puts "===============================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+# 1. Obter Token
+puts "1. Fazendo Login..."
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}' > token.json\r"
+expect "root@"
+
+send "cat token.json\r"
+expect "root@"
+
+# Extrair token com node
+send "export TOKEN=\$(node -e \"console.log(require('./token.json').token)\")\r"
+expect "root@"
+
+puts "\nToken obtido: \$TOKEN\n"
+
+# 2. Testar /auth/me localmente
+puts "2. Testando /auth/me (Local)..."
+send "curl -v -H \"Authorization: Bearer \$TOKEN\" http://localhost:5000/api/auth/me\r"
+expect "root@"
+
+puts "\n\n3. Testando /auth/me (Via Nginx/HTTPS Public)..."
+# Nota: curl para dominio publico pode falhar de dentro do servidor se nao tiver loopback NAT, mas tentaremos
+send "curl -v -k -H \"Authorization: Bearer \$TOKEN\" https://clinica.iaaplicativos.com.br/api/auth/me\r"
+expect "root@"
+
+puts "\n===============================\n"
+send "exit\r"
+expect eof

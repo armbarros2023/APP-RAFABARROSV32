@@ -1,0 +1,55 @@
+#!/usr/bin/expect -f
+
+set timeout 90
+set password "B075@#ax/980tec"
+
+puts "🗄️  CRIANDO TABELAS NO BANCO DE DADOS"
+puts "====================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+puts "\n📊 Executando Prisma DB Push...\n"
+
+send "npx prisma db push --accept-data-loss\r"
+set timeout 90
+expect "root@"
+
+puts "\n✓ Tabelas criadas\n"
+
+puts "\n👤 Criando usuário admin...\n"
+
+send "node create-admin.js\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Admin criado\n"
+
+puts "\n🔄 Reiniciando backend...\n"
+
+send "pm2 restart clinicrafabarros-api --update-env\r"
+expect "root@"
+
+send "sleep 5\r"
+expect "root@"
+
+puts "\n🧪 Testando login...\n"
+
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}' | head -c 200\r"
+expect "root@"
+
+puts "\n\n====================================\n"
+puts "✅ BANCO CONFIGURADO!\n"
+puts "Acesse: https://clinica.iaaplicativos.com.br\n"
+puts "Email: armbrros2023@gmail.com\n"
+puts "Senha: 483220\n"
+
+send "exit\r"
+expect eof

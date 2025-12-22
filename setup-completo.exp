@@ -1,0 +1,70 @@
+#!/usr/bin/expect -f
+
+set timeout 90
+set password "B075@#ax/980tec"
+
+puts "🗄️  SETUP COMPLETO DO BANCO E BACKEND"
+puts "====================================\n"
+
+# Enviar arquivo SQL
+spawn scp setup-db.sql root@69.62.103.58:/tmp/
+
+expect "password:"
+send "$password\r"
+
+expect eof
+
+puts "✓ Arquivo SQL enviado\n"
+
+# Conectar ao servidor
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+# Executar SQL
+send "sudo -u postgres psql -f /tmp/setup-db.sql 2>&1 | head -20\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Banco configurado\n"
+
+# Ir para backend
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+# Executar migrations
+send "npx prisma migrate deploy 2>&1\r"
+set timeout 60
+expect "root@"
+
+puts "\n✓ Migrations OK\n"
+
+# Criar admin
+send "node create-admin.js 2>&1\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Admin criado\n"
+
+# Reiniciar
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+send "sleep 4\r"
+expect "root@"
+
+# Testar login
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}' | head -c 200\r"
+expect "root@"
+
+puts "\n====================================\n"
+puts "✅ CONCLUÍDO!\n"
+puts "Login: https://clinica.iaaplicativos.com.br\n"
+puts "Email: armbrros2023@gmail.com\n"
+puts "Senha: 483220\n"
+
+send "exit\r"
+expect eof

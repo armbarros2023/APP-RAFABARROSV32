@@ -1,0 +1,79 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🔧 CORRIGINDO CONFIGURAÇÃO NGINX"
+puts "=================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+# Criar configuração correta
+send "cat > /etc/nginx/sites-available/clinicrafabarros << 'EOF'\r"
+send "server \{\r"
+send "    listen 80;\r"
+send "    server_name clinica.iaaplicativos.com.br;\r"
+send "    return 301 https://\\\$host\\\$request_uri;\r"
+send "\}\r"
+send "\r"
+send "server \{\r"
+send "    listen 443 ssl http2;\r"
+send "    server_name clinica.iaaplicativos.com.br;\r"
+send "    \r"
+send "    ssl_certificate /etc/letsencrypt/live/clinica.iaaplicativos.com.br/fullchain.pem;\r"
+send "    ssl_certificate_key /etc/letsencrypt/live/clinica.iaaplicativos.com.br/privkey.pem;\r"
+send "    include /etc/letsencrypt/options-ssl-nginx.conf;\r"
+send "    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;\r"
+send "    \r"
+send "    root /var/www/clinicrafabarros-frontend;\r"
+send "    index index.html;\r"
+send "    \r"
+send "    access_log /var/log/nginx/clinicrafabarros-access.log;\r"
+send "    error_log /var/log/nginx/clinicrafabarros-error.log;\r"
+send "    \r"
+send "    location /api \{\r"
+send "        proxy_pass http://127.0.0.1:5000/api;\r"
+send "        proxy_http_version 1.1;\r"
+send "        proxy_set_header Upgrade \\\$http_upgrade;\r"
+send "        proxy_set_header Connection 'upgrade';\r"
+send "        proxy_set_header Host \\\$host;\r"
+send "        proxy_set_header X-Real-IP \\\$remote_addr;\r"
+send "        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;\r"
+send "        proxy_set_header X-Forwarded-Proto \\\$scheme;\r"
+send "        proxy_cache_bypass \\\$http_upgrade;\r"
+send "    \}\r"
+send "    \r"
+send "    location / \{\r"
+send "        try_files \\\$uri \\\$uri/ /index.html;\r"
+send "    \}\r"
+send "    \r"
+send "    location ~* \\\\.\(js\|css\|png\|jpg\|jpeg\|gif\|ico\|svg\|woff\|woff2\|ttf\|eot\)\\\$ \{\r"
+send "        expires 1y;\r"
+send "        add_header Cache-Control \\\"public, immutable\\\";\r"
+send "    \}\r"
+send "    \r"
+send "    add_header X-Frame-Options \\\"SAMEORIGIN\\\" always;\r"
+send "    add_header X-Content-Type-Options \\\"nosniff\\\" always;\r"
+send "    add_header X-XSS-Protection \\\"1; mode=block\\\" always;\r"
+send "\}\r"
+send "EOF\r"
+expect "root@"
+
+puts "\n✓ Configuração criada\n"
+
+send "nginx -t\r"
+expect "root@"
+
+send "systemctl reload nginx\r"
+expect "root@"
+
+puts "\n=================================\n"
+puts "✅ NGINX CONFIGURADO!\n"
+
+send "exit\r"
+expect eof

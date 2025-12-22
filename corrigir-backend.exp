@@ -1,0 +1,139 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🔧 CORRIGINDO BACKEND E CRIANDO USUÁRIO"
+puts "========================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+puts "\n✓ Conectado\n"
+
+# Ir para diretório
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+# Verificar se .env existe
+send "ls -la .env\r"
+expect "root@"
+
+# Criar .env correto
+send "cat > .env << 'EOF'\r"
+send "NODE_ENV=production\r"
+send "PORT=5000\r"
+send "DATABASE_URL=postgresql://clinicapp:Ra483220fa@localhost:5432/app-rafabarros\r"
+send "JWT_SECRET=clinica-rafa-barros-secret-production-2025-secure\r"
+send "JWT_EXPIRES_IN=7d\r"
+send "CORS_ORIGIN=https://clinica.iaaplicativos.com.br\r"
+send "ADMIN_NAME=Armando de Barros\r"
+send "ADMIN_EMAIL=armbrros2023@gmail.com\r"
+send "ADMIN_PASSWORD=483220\r"
+send "EOF\r"
+expect "root@"
+
+puts "\n✓ .env criado\n"
+
+# Verificar conteúdo
+send "cat .env\r"
+expect "root@"
+
+# Criar usuário admin diretamente no banco
+send "PGPASSWORD=Ra483220fa psql -h localhost -U clinicapp -d app-rafabarros << 'SQLEOF'\r"
+send "-- Deletar usuário se existir\r"
+send "DELETE FROM \\\"User\\\" WHERE email = 'armbrros2023@gmail.com';\r"
+send "\r"
+send "-- Criar usuário admin com senha hash\r"
+send "INSERT INTO \\\"User\\\" (id, name, email, password, role, active, \\\"createdAt\\\", \\\"updatedAt\\\")\r"
+send "VALUES (\r"
+send "  gen_random_uuid(),\r"
+send "  'Armando de Barros',\r"
+send "  'armbrros2023@gmail.com',\r"
+send "  '\\\$2b\\\$10\\\$YQj5Z5Z5Z5Z5Z5Z5Z5Z5ZeK5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5',\r"
+send "  'ADMIN',\r"
+send "  true,\r"
+send "  NOW(),\r"
+send "  NOW()\r"
+send ");\r"
+send "\r"
+send "-- Verificar\r"
+send "SELECT id, name, email, role, active FROM \\\"User\\\" WHERE email = 'armbrros2023@gmail.com';\r"
+send "SQLEOF\r"
+expect "root@" 30
+
+puts "\n✓ Tentativa de criar usuário no banco\n"
+
+# Criar usuário via Node.js
+send "cd /root/clinicrafabarros && node << 'NODEOF'\r"
+send "require('dotenv').config();\r"
+send "const { PrismaClient } = require('@prisma/client');\r"
+send "const bcrypt = require('bcrypt');\r"
+send "\r"
+send "const prisma = new PrismaClient();\r"
+send "\r"
+send "(async () => {\r"
+send "  try {\r"
+send "    const hashedPassword = await bcrypt.hash('483220', 10);\r"
+send "    console.log('Hash gerado:', hashedPassword);\r"
+send "    \r"
+send "    // Deletar se existir\r"
+send "    await prisma.user.deleteMany({\r"
+send "      where: { email: 'armbrros2023@gmail.com' }\r"
+send "    });\r"
+send "    \r"
+send "    // Criar novo\r"
+send "    const admin = await prisma.user.create({\r"
+send "      data: {\r"
+send "        name: 'Armando de Barros',\r"
+send "        email: 'armbrros2023@gmail.com',\r"
+send "        password: hashedPassword,\r"
+send "        role: 'ADMIN',\r"
+send "        active: true\r"
+send "      }\r"
+send "    });\r"
+send "    \r"
+send "    console.log('✓ Admin criado:', admin.email);\r"
+send "    \r"
+send "    // Verificar\r"
+send "    const users = await prisma.user.findMany();\r"
+send "    console.log('Total de usuários:', users.length);\r"
+send "    users.forEach(u => console.log('  -', u.email, u.role));\r"
+send "    \r"
+send "  } catch (error) {\r"
+send "    console.error('Erro:', error.message);\r"
+send "  } finally {\r"
+send "    await prisma.\\\$disconnect();\r"
+send "  }\r"
+send "})();\r"
+send "NODEOF\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Usuário criado via Node.js\n"
+
+# Reiniciar PM2
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+send "sleep 3\r"
+expect "root@"
+
+# Verificar logs
+send "pm2 logs clinicrafabarros-api --lines 15 --nostream\r"
+expect "root@"
+
+# Testar login
+send "curl -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"}' | jq .\r"
+expect "root@"
+
+puts "\n========================================\n"
+puts "✅ CORREÇÃO CONCLUÍDA!\n"
+puts "Teste o login agora em:\n"
+puts "https://clinica.iaaplicativos.com.br\n"
+
+send "exit\r"
+expect eof

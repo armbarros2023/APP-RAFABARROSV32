@@ -1,0 +1,60 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+set data [timestamp -format %Y%m%d_%H%M%S]
+
+puts "📦 INICIANDO BACKUP COMPLETO (BANCO + ARQUIVOS)"
+puts "=============================================="
+
+# Criar diretório local para receber os backups
+exec mkdir -p backups/$data
+
+# Conectar no VPS
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+
+# Criar diretório de backup remoto
+send "mkdir -p /root/backups_temp\r"
+expect "root@"
+
+# 1. Backup do Banco de Dados
+puts "\n🗄️  Fazendo Dump do Banco de Dados..."
+send "PGPASSWORD='Ra483220fa' pg_dump -h localhost -p 5433 -U clinicapp app-rafabarros > /root/backups_temp/db_dump_$data.sql\r"
+expect "root@"
+
+# 2. Backup dos Arquivos do Backend (.env e uploads são importantes)
+puts "\n📂 Compactando Backend (configs e dados)..."
+# Excluir node_modules para economizar tempo/espaço
+send "tar -czf /root/backups_temp/backend_$data.tar.gz --exclude=node_modules -C /root/clinicrafabarros .\r"
+expect "root@"
+
+# 3. Backup do Frontend (Build de produção)
+puts "\n🌐 Compactando Frontend (Build)..."
+send "tar -czf /root/backups_temp/frontend_$data.tar.gz -C /var/www/clinicrafabarros-frontend .\r"
+expect "root@"
+
+# Sair do SSH
+send "exit\r"
+expect eof
+
+# 4. Baixar Backups
+puts "\n⬇️  Baixando backups para pasta local 'backups/$data'..."
+spawn scp -r root@69.62.103.58:/root/backups_temp/* backups/$data/
+expect "password:"
+send "$password\r"
+expect eof
+
+# Limpar remoto (opcional, vou deixar por segurança por enquanto ou limpar?) 
+# Melhor limpar o temp para não lotar o servidor
+puts "\n🧹 Limpando arquivos temporários no servidor..."
+spawn ssh root@69.62.103.58 "rm -rf /root/backups_temp"
+expect "password:"
+send "$password\r"
+expect eof
+
+puts "\n=============================================="
+puts "✅ BACKUP CONCLUÍDO COM SUCESSO!"
+puts "📁 Arquivos salvos em: backups/$data/"

@@ -1,0 +1,34 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+set password "B075@#ax/980tec"
+
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+
+puts "Enviando script de correção..."
+# Sair para usar scp
+send "exit\r"
+expect eof
+
+spawn scp fix-user-typo.js root@69.62.103.58:/root/clinicrafabarros/
+expect "password:"
+send "$password\r"
+expect eof
+
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+
+send "cd /root/clinicrafabarros && node fix-user-typo.js\r"
+expect "root@"
+
+puts "Sincronizando..."
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+send "exit\r"
+expect eof

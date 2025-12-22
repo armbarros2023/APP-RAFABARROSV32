@@ -1,0 +1,75 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🔧 CORRIGINDO .ENV E CRIANDO ADMIN - FINAL"
+puts "==========================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+# Criar .env correto
+send "cat > .env << 'ENVEOF'\r"
+send "NODE_ENV=production\r"
+send "PORT=5000\r"
+send "DATABASE_URL=postgresql://clinicapp:Ra483220fa@localhost:5433/app-rafabarros\r"
+send "JWT_SECRET=clinica-rafa-barros-secret-production-2025-secure\r"
+send "JWT_EXPIRES_IN=7d\r"
+send "CORS_ORIGIN=https://clinica.iaaplicativos.com.br\r"
+send "ADMIN_NAME=Armando de Barros\r"
+send "ADMIN_EMAIL=armbrros2023@gmail.com\r"
+send "ADMIN_PASSWORD=483220\r"
+send "ENVEOF\r"
+expect "root@"
+
+puts "\n✓ .env criado com porta 5433\n"
+
+# Verificar
+send "cat .env | grep DATABASE\r"
+expect "root@"
+
+# Executar migrations
+send "npx prisma migrate deploy\r"
+set timeout 60
+expect "root@"
+
+puts "\n✓ Migrations OK\n"
+
+# Criar admin
+send "node create-admin.js\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Admin criado\n"
+
+# Reiniciar com --update-env
+send "pm2 restart clinicrafabarros-api --update-env\r"
+expect "root@"
+
+send "sleep 5\r"
+expect "root@"
+
+# Verificar logs
+send "pm2 logs clinicrafabarros-api --lines 10 --nostream\r"
+expect "root@"
+
+# Testar login
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}'\r"
+expect "root@"
+
+puts "\n==========================================\n"
+puts "✅ CONCLUÍDO!\n"
+puts "Acesse: https://clinica.iaaplicativos.com.br\n"
+puts "Email: armbrros2023@gmail.com\n"
+puts "Senha: 483220\n"
+
+send "exit\r"
+expect eof

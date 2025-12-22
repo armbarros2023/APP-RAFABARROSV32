@@ -19,22 +19,36 @@ const registerSchema = z.object({
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { email, password } = loginSchema.parse(req.body);
+        const body = req.body;
+        if (body.email) {
+            body.email = body.email.trim().toLowerCase();
+        }
+
+        const { email, password } = loginSchema.parse(body);
 
         // Find user
         const user = await prisma.user.findUnique({
             where: { email },
         });
 
+        console.log(`[LOGIN DEBUG] Tentativa para: ${email}`);
+
         if (!user) {
+            console.log('[LOGIN DEBUG] Usuário NÃO encontrado no banco.');
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
 
+        console.log(`[LOGIN DEBUG] Usuário encontrado: ${user.id}, Role: ${user.role}`);
+        console.log(`[LOGIN DEBUG] Hash no banco: ${user.password.substring(0, 20)}...`);
+
         // Verify password
         const isPasswordValid = await comparePassword(password, user.password);
 
+        console.log(`[LOGIN DEBUG] Senha válida? ${isPasswordValid}`);
+
         if (!isPasswordValid) {
+            console.log('[LOGIN DEBUG] Senha INVÁLIDA.');
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }

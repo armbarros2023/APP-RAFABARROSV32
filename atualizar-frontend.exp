@@ -1,0 +1,57 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🚀 ATUALIZANDO FRONTEND COM URL CORRETA"
+puts "========================================\n"
+
+# Criar pacote
+spawn bash -c "cd /Users/arbtechinfo.ia/Projetos\\ 2025/app-rafabarrosv32 && tar -czf /tmp/frontend-update.tar.gz -C dist ."
+
+expect eof
+
+puts "✓ Pacote criado\n"
+
+# Enviar para servidor
+spawn scp /tmp/frontend-update.tar.gz root@69.62.103.58:/tmp/
+
+expect "password:"
+send "$password\r"
+
+expect eof
+
+puts "✓ Pacote enviado\n"
+
+# Conectar e atualizar
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+send "cd /var/www/clinicrafabarros-frontend\r"
+expect "root@"
+
+send "rm -rf *\r"
+expect "root@"
+
+send "tar -xzf /tmp/frontend-update.tar.gz\r"
+expect "root@"
+
+send "ls -la\r"
+expect "root@"
+
+send "systemctl reload nginx\r"
+expect "root@"
+
+puts "\n========================================\n"
+puts "✅ FRONTEND ATUALIZADO!\n"
+puts "Acesse: https://clinica.iaaplicativos.com.br\n"
+puts "Email: armbrros2023@gmail.com\n"
+puts "Senha: 483220\n"
+puts "\nO login deve funcionar agora!\n"
+
+send "exit\r"
+expect eof

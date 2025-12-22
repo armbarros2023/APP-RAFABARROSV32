@@ -1,0 +1,59 @@
+#!/usr/bin/expect -f
+
+set timeout 120
+set password "B075@#ax/980tec"
+
+puts "🔧 RECUPERAÇÃO DE DB E FIX PROXY"
+puts "===============================\n"
+
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+send "exit\r"
+expect eof
+
+# 1. Enviar server.ts corrigido
+puts "\n1. Enviando server.ts..."
+spawn scp backend/src/server.ts root@69.62.103.58:/root/clinicrafabarros/src/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 2. Conectar
+spawn ssh root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "root@"
+
+# 3. Criar Banco se não existir
+puts "\n2. Verificando/Criando Banco de Dados..."
+# Conecta no 'postgres' para criar o 'app-rafabarros'
+send "PGPASSWORD=Ra483220fa psql -h localhost -p 5433 -U clinicapp -d postgres -c \"CREATE DATABASE \\\"app-rafabarros\\\";\"\r"
+expect "root@"
+
+# 4. Rebuild
+puts "\n3. Recompilando Backend..."
+send "cd /root/clinicrafabarros && npm run build\r"
+expect "root@"
+
+# 5. Push Schema (garantir tabelas)
+puts "\n4. Sincronizando Schema (Prisma Push)..."
+send "npx prisma db push\r"
+expect "root@"
+
+# 6. Reset Senha Admin (Garantir usuário existe na nova estrutura se foi recriado)
+puts "\n5. Recriando Admin..."
+send "node reset-password-force.js\r"
+expect "root@"
+
+# 7. Restart PM2
+puts "\n6. Reiniciando PM2..."
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+puts "\n===============================\n"
+puts "✅ RECUPERAÇÃO CONCLUÍDA!"
+
+send "exit\r"
+expect eof

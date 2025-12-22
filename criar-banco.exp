@@ -1,0 +1,75 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "B075@#ax/980tec"
+
+puts "🗄️  CRIANDO BANCO DE DADOS E USUÁRIO ADMIN"
+puts "==========================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+# Criar banco de dados
+send "sudo -u postgres psql << 'SQLEOF'\r"
+send "-- Criar banco se não existir\r"
+send "CREATE DATABASE \"app-rafabarros\";\r"
+send "\r"
+send "-- Criar usuário se não existir\r"
+send "CREATE USER clinicapp WITH PASSWORD 'Ra483220fa';\r"
+send "\r"
+send "-- Dar permissões\r"
+send "GRANT ALL PRIVILEGES ON DATABASE \"app-rafabarros\" TO clinicapp;\r"
+send "\r"
+send "-- Conectar ao banco\r"
+send "\\\\c app-rafabarros\r"
+send "\r"
+send "-- Dar permissões no schema\r"
+send "GRANT ALL ON SCHEMA public TO clinicapp;\r"
+send "\r"
+send "-- Listar bancos\r"
+send "\\\\l\r"
+send "SQLEOF\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Banco de dados configurado\n"
+
+# Ir para diretório do backend
+send "cd /root/clinicrafabarros\r"
+expect "root@"
+
+# Executar migrations
+send "npx prisma migrate deploy\r"
+set timeout 60
+expect "root@"
+
+puts "\n✓ Migrations executadas\n"
+
+# Criar admin
+send "node create-admin.js\r"
+set timeout 30
+expect "root@"
+
+puts "\n✓ Admin criado\n"
+
+# Reiniciar backend
+send "pm2 restart clinicrafabarros-api\r"
+expect "root@"
+
+send "sleep 3\r"
+expect "root@"
+
+# Testar
+send "curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}'\r"
+expect "root@"
+
+puts "\n==========================================\n"
+puts "✅ TUDO CONFIGURADO!\n"
+puts "Teste em: https://clinica.iaaplicativos.com.br\n"
+
+send "exit\r"
+expect eof

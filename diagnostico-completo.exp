@@ -1,0 +1,55 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+set password "B075@#ax/980tec"
+
+puts "🔍 DIAGNÓSTICO COMPLETO DO SISTEMA"
+puts "===================================\n"
+
+spawn ssh root@69.62.103.58
+
+expect "password:"
+send "$password\r"
+
+expect "root@"
+
+puts "\n📊 1. STATUS DO BACKEND (PM2)\n"
+send "pm2 list\r"
+expect "root@"
+
+puts "\n🔌 2. PORTAS EM USO\n"
+send "netstat -tulpn | grep LISTEN | grep -E ':(5000|5433|80|443)'\r"
+expect "root@"
+
+puts "\n📁 3. CONFIGURAÇÃO DO BACKEND (.env)\n"
+send "cd /root/clinicrafabarros && cat .env\r"
+expect "root@"
+
+puts "\n📋 4. LOGS DO BACKEND (últimas 20 linhas)\n"
+send "pm2 logs clinicrafabarros-api --lines 20 --nostream\r"
+expect "root@"
+
+puts "\n🗄️  5. VERIFICAR USUÁRIOS NO BANCO\n"
+send "PGPASSWORD=Ra483220fa psql -h localhost -p 5433 -U clinicapp -d app-rafabarros -c \"SELECT id, name, email, role FROM \\\"User\\\";\"\r"
+expect "root@"
+
+puts "\n🧪 6. TESTE DE LOGIN VIA API\n"
+send "curl -v -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '\{\"email\":\"armbrros2023@gmail.com\",\"password\":\"483220\"\}' 2>&1 | head -50\r"
+expect "root@"
+
+puts "\n🌐 7. VERIFICAR FRONTEND\n"
+send "ls -la /var/www/clinicrafabarros-frontend/ | head -10\r"
+expect "root@"
+
+puts "\n📝 8. CONFIGURAÇÃO NGINX\n"
+send "cat /etc/nginx/sites-available/clinicrafabarros | grep -A 5 'server_name\\|location'\r"
+expect "root@"
+
+puts "\n🔐 9. TESTAR HASH DE SENHA\n"
+send "cd /root/clinicrafabarros && node -e \"const bcrypt = require('bcrypt'); bcrypt.compare('483220', '\\\$2b\\\$10\\\$LKbGnBLyQSKx0/7/ZIaZOedWbsimawwWUPVQHxThy.U7TjHVVR.f6').then(r => console.log('Senha válida:', r));\"\r"
+expect "root@"
+
+puts "\n===================================\n"
+
+send "exit\r"
+expect eof
