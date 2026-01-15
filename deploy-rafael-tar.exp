@@ -1,0 +1,41 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Enviar o schema compactado (tar.gz) para evitar corrupção de texto
+spawn scp -o StrictHostKeyChecking=no schema.tar.gz root@69.62.103.58:/var/www/clinicrafabarros-backend/prisma/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 2. Enviar o script de usuário
+spawn scp -o StrictHostKeyChecking=no create-rafael-admin.js root@69.62.103.58:/var/www/clinicrafabarros-backend/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 3. Conectar e executar
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/prisma/\r"
+# Extrair o schema
+send "tar -xzf schema.tar.gz\r"
+send "rm schema.tar.gz\r"
+
+send "cd ..\r"
+
+# Limpar e gerar
+send "rm -rf node_modules/.prisma\r"
+send "npx prisma generate\r"
+
+# Criar usuario
+send "node create-rafael-admin.js\r"
+
+# Limpar script
+send "rm create-rafael-admin.js\r"
+send "exit\r"
+expect eof

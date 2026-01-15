@@ -94,7 +94,7 @@ const LoginPage: React.FC = () => {
               </div>
               <span>Lembrar-me</span>
             </label>
-            <a href="#" className="hover:underline">Esqueceu a senha?</a>
+            <Link to="/forgot-password" className="hover:underline">Esqueceu a senha?</Link>
           </div>
 
           {error && <p className="text-sm text-red-300 text-center">{error}</p>}

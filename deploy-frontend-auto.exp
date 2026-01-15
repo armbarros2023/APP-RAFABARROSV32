@@ -1,0 +1,26 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# Upload do arquivo
+spawn scp -o StrictHostKeyChecking=no dist.tar.gz root@69.62.103.58:/var/www/clinicrafabarros-frontend/
+expect "password:"
+send "$password\r"
+expect eof
+
+# Conectar SSH e extrair
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+send "cd /var/www/clinicrafabarros-frontend/\r"
+send "tar -xzf dist.tar.gz\r"
+send "rm -rf assets index.html\r"
+send "mv dist/* .\r"
+send "rm -rf dist dist.tar.gz\r"
+# Garantir permissões
+send "chown -R www-data:www-data /var/www/clinicrafabarros-frontend\r"
+send "chmod -R 755 /var/www/clinicrafabarros-frontend\r"
+send "exit\r"
+expect eof

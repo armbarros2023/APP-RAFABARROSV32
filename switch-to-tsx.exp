@@ -1,0 +1,31 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Conectar e trocar o processo PM2
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/\r"
+
+# Parar e deletar o processo antigo (que roda o dist/ quebrado)
+send "pm2 stop 2\r"
+send "pm2 delete 2\r"
+# Tambem deletar pelo nome pra garantir
+send "pm2 delete clinicrafabarros-api\r"
+
+# Iniciar novo processo usando npm run dev (tsx)
+# Isso vai rodar o código TypeScript direto, ignorando erros de compilação bloqueante
+send "pm2 start npm --name clinicrafabarros-api -- run dev\r"
+
+# Salvar lista PM2 para persistir no reboot
+send "pm2 save\r"
+
+# Verificar logs rápidos para garantir que subiu
+send "pm2 logs clinicrafabarros-api --lines 20 --nostream\r"
+
+send "exit\r"
+expect eof

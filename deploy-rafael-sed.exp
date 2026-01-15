@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Enviar script
+spawn scp -o StrictHostKeyChecking=no create-rafael-admin.js root@69.62.103.58:/var/www/clinicrafabarros-backend/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 2. Conectar
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/prisma/\r"
+
+# Tentar converter dos2unix na marra usando sed
+# Remove Carriage Returns (\r)
+send "sed -i 's/\\r$//' schema.prisma\r"
+
+# Verificar se tem caracteres nulos ou estranhos
+send "tr -d '\\000' < schema.prisma > schema.prisma.clean && mv schema.prisma.clean schema.prisma\r"
+
+# Verificar o conteúdo da linha 40 a 50
+send "sed -n '40,50p' schema.prisma\r"
+
+send "cd ..\r"
+
+# Regenerar
+send "rm -rf node_modules/.prisma\r"
+send "npx prisma generate\r"
+
+# Criar usuario
+send "node create-rafael-admin.js\r"
+
+# Limpar
+send "rm create-rafael-admin.js\r"
+send "exit\r"
+expect eof

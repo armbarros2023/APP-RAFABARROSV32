@@ -12,7 +12,7 @@ const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { selectedBranch } = useBranch();
-    
+
     // Mock data for summary - In a real app, this would be fetched and filtered based on selectedBranch.id
     const summaryStats = [
         { title: 'Receita do Mês', value: 'R$ 15.250,00', icon: BriefcaseIcon, color: 'text-green-500' },
@@ -20,7 +20,7 @@ const AdminDashboard: React.FC = () => {
         { title: 'Sessões Agendadas (Hoje)', value: '12', icon: CalendarIcon, color: 'text-purple-500', path: '/agenda-terapeuta' },
         { title: 'Faturas Pendentes', value: 'R$ 3.800,00', icon: CurrencyDollarIcon, color: 'text-red-500', path: '/faturamento-alunos' },
     ];
-    
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
@@ -29,15 +29,15 @@ const AdminDashboard: React.FC = () => {
                     {selectedBranch && <p className="text-lg text-slate-600 dark:text-slate-300">Exibindo dados da: <span className="font-bold text-primary dark:text-primary-light">{selectedBranch.name}</span></p>}
                 </div>
                 <div className="flex items-center space-x-2 print:hidden">
-                    <Button onClick={() => window.print()} variant="outline" leftIcon={<PrinterIcon className="w-5 h-5"/>}>
+                    <Button onClick={() => window.print()} variant="outline" leftIcon={<PrinterIcon className="w-5 h-5" />}>
                         Imprimir
                     </Button>
-                    <Button onClick={() => navigate('/alunos', { state: { openAddModal: true } })} leftIcon={<PlusCircleIcon className="w-5 h-5"/>}>
+                    <Button onClick={() => navigate('/alunos', { state: { openAddModal: true } })} leftIcon={<PlusCircleIcon className="w-5 h-5" />}>
                         Adicionar Aluno
                     </Button>
                 </div>
             </div>
-      
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {summaryStats.map((stat, index) => {
                     const CardContent = (
@@ -98,16 +98,16 @@ const TherapistDashboard: React.FC = () => {
                     <h2 className="text-3xl font-semibold text-slate-800 dark:text-slate-100">Bem-vindo(a), {user?.name}!</h2>
                     <p className="text-slate-700 dark:text-slate-300 mt-1">Seu painel para um dia produtivo e focado no desenvolvimento.</p>
                 </div>
-                <Button onClick={() => window.print()} variant="outline" className="bg-white dark:bg-slate-700 print:hidden" leftIcon={<PrinterIcon className="w-5 h-5"/>}>
+                <Button onClick={() => window.print()} variant="outline" className="bg-white dark:bg-slate-700 print:hidden" leftIcon={<PrinterIcon className="w-5 h-5" />}>
                     Imprimir
                 </Button>
             </div>
-            
+
             <Card className="!p-0 overflow-hidden">
                 <div className="relative">
-                    <img 
-                        src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
-                        alt="Equipe colaborando em um ambiente profissional" 
+                    <img
+                        src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                        alt="Equipe colaborando em um ambiente profissional"
                         className="w-full h-64 object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -119,20 +119,20 @@ const TherapistDashboard: React.FC = () => {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 <Card title="Acesso Rápido" className="md:col-span-2">
+                <Card title="Acesso Rápido" className="md:col-span-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div onClick={() => navigate('/agenda-terapeuta')} className="group p-4 bg-white dark:bg-slate-700/50 rounded-lg text-center cursor-pointer hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-primary-light/20 transition-all duration-200">
-                           <CalendarIcon className="h-12 w-12 text-primary dark:text-primary-light mx-auto" />
-                           <h4 className="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-200">Minha Agenda</h4>
-                           <p className="text-sm text-slate-500 dark:text-slate-400">Veja seus compromissos e planeje seu dia.</p>
+                            <CalendarIcon className="h-12 w-12 text-primary dark:text-primary-light mx-auto" />
+                            <h4 className="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-200">Minha Agenda</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Veja seus compromissos e planeje seu dia.</p>
                         </div>
-                         <div onClick={() => navigate('/alunos')} className="group p-4 bg-white dark:bg-slate-700/50 rounded-lg text-center cursor-pointer hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-primary-light/20 transition-all duration-200">
-                           <UserGroupIcon className="h-12 w-12 text-primary dark:text-primary-light mx-auto" />
-                           <h4 className="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-200">Meus Alunos</h4>
-                           <p className="text-sm text-slate-500 dark:text-slate-400">Acesse perfis e acompanhe o progresso.</p>
+                        <div onClick={() => navigate('/alunos')} className="group p-4 bg-white dark:bg-slate-700/50 rounded-lg text-center cursor-pointer hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-primary-light/20 transition-all duration-200">
+                            <UserGroupIcon className="h-12 w-12 text-primary dark:text-primary-light mx-auto" />
+                            <h4 className="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-200">Meus Alunos</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Acesse perfis e acompanhe o progresso.</p>
                         </div>
                     </div>
-                 </Card>
+                </Card>
 
                 <Card title="Avisos Importantes">
                     <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
@@ -147,13 +147,13 @@ const TherapistDashboard: React.FC = () => {
 }
 
 const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return null; // Or a loading spinner
-  }
+    const { user } = useAuth();
 
-  return user.role === 'admin' ? <AdminDashboard /> : <TherapistDashboard />;
+    if (!user) {
+        return null; // Or a loading spinner
+    }
+
+    return user.role === 'ADMIN' ? <AdminDashboard /> : <TherapistDashboard />;
 };
 
 export default DashboardPage;

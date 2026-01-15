@@ -23,7 +23,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'therapist';
+  role: 'ADMIN' | 'THERAPIST';
 }
 
 export interface StaffMember {
@@ -44,13 +44,13 @@ export interface StaffMember {
   terminationDate?: string; // Data de desligamento (opcional)
 }
 
-export type FinancialCategory = 
-  | 'RECEITA_ATENDIMENTO' 
-  | 'RECEITA_CURSO' 
-  | 'RECEITA_KIT' 
-  | 'CUSTO_FIXO' 
-  | 'CUSTO_VARIAVEL' 
-  | 'INVESTIMENTO' 
+export type FinancialCategory =
+  | 'RECEITA_ATENDIMENTO'
+  | 'RECEITA_CURSO'
+  | 'RECEITA_KIT'
+  | 'CUSTO_FIXO'
+  | 'CUSTO_VARIAVEL'
+  | 'INVESTIMENTO'
   | 'CAPITAL_GIRO';
 
 export interface FinancialTransaction {
@@ -60,10 +60,10 @@ export interface FinancialTransaction {
   amount: number; // Gross Value
   taxPercentage?: number; // Taxa descontada
   type: 'revenue' | 'expense';
-  category: FinancialCategory; 
-  branchId: string; 
+  category: FinancialCategory;
+  branchId: string;
   studentId?: string; // Link to student if applicable
-  
+
   // Novos campos para Relatórios
   status?: 'paid' | 'pending'; // Pago ou Pendente (A Pagar/A Receber)
   nfeNumber?: string; // Número da Nota Fiscal (se emitida)
@@ -90,7 +90,7 @@ export interface Appointment {
 export type PaymentMethod = 'PIX' | 'DEBITO' | 'CREDITO_RECORRENTE' | 'FIDELIDADE_TRIMESTRAL' | 'FIDELIDADE_SEMESTRAL' | 'FIDELIDADE_ANUAL';
 
 export interface Student {
-  id:string;
+  id: string;
   branchId: string;
   name: string;
   therapistId: string;
@@ -110,7 +110,7 @@ export interface Student {
   postalCode?: string; // CEP
   assessments?: InitialAssessment[];
   invoices?: StudentInvoice[];
-  
+
   // New Plan Fields
   sessionsPerMonth?: 4 | 8 | 12 | 16 | 20;
   monthlyValue?: number;
@@ -120,21 +120,21 @@ export interface Student {
 }
 
 export interface StudentActivityLog {
-    id: string;
-    studentId: string;
-    date: string;
-    description: string;
-    therapistId: string;
+  id: string;
+  studentId: string;
+  date: string;
+  description: string;
+  therapistId: string;
 }
 
 export interface StudentMedia {
-    id: string;
-    studentId: string;
-    uploadDate: string;
-    url: string;
-    type: 'video' | 'image' | 'document';
-    description: string;
-    therapistId: string;
+  id: string;
+  studentId: string;
+  uploadDate: string;
+  url: string;
+  type: 'video' | 'image' | 'document';
+  description: string;
+  therapistId: string;
 }
 
 

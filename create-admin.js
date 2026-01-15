@@ -13,7 +13,7 @@ async function createAdmin() {
 
         // Remover usuários existentes
         await prisma.user.deleteMany({
-            where: { email: 'armbrros2023@gmail.com' }
+            where: { email: 'armbarros2023@gmail.com' }
         });
         console.log('✓ Usuários antigos removidos');
 
@@ -21,7 +21,7 @@ async function createAdmin() {
         const admin = await prisma.user.create({
             data: {
                 name: 'Armando de Barros',
-                email: 'armbrros2023@gmail.com',
+                email: 'armbarros2023@gmail.com',
                 password: hashedPassword,
                 role: 'ADMIN'
             }

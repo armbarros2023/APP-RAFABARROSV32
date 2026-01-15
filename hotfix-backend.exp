@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Conectar e aplicar HOTFIX
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/src/controllers/\r"
+
+# Backup
+send "cp authController.ts authController.ts.bak\r"
+
+# Substituição 1: Compare Password (Login)
+send "sed -i 's/user.password)/user.passwordHash)/g' authController.ts\r"
+
+# Substituição 2: Create User (Register)
+send "sed -i 's/password: hashedPassword,/passwordHash: hashedPassword,/g' authController.ts\r"
+
+send "cd ../..\r"
+
+# 2. Rodar Build
+send "npm run build\r"
+
+# 3. Reiniciar PM2
+# Tenta pelo ID se o nome falhar
+send "pm2 restart 2 || pm2 restart clinicrafabarros-backend\r"
+
+send "exit\r"
+expect eof

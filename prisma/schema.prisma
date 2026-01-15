@@ -1,0 +1,235 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// MODELO DE USUÁRIOS
+// ========================================
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   // 'admin', 'therapist', 'manager'
+  branchId     String?  @map("branch_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  branch       Branch?  @relation(fields: [branchId], references: [id])
+  therapist    Therapist?
+  activityLogs ActivityLog[]
+
+  @@map("users")
+}
+
+// ========================================
+// MODELO DE FILIAIS
+// ========================================
+model Branch {
+  id                  String   @id @default(uuid())
+  name                String
+  cnpj                String?  @unique
+  stateRegistration   String?  @map("state_registration")
+  address             String?
+  phone               String?
+  email               String?
+  responsible         String?
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  users               User[]
+  therapists          Therapist[]
+  students            Student[]
+  appointments        Appointment[]
+  transactions        FinancialTransaction[]
+  assessments         InitialAssessment[]
+
+  @@map("branches")
+}
+
+// ========================================
+// MODELO DE TERAPEUTAS
+// ========================================
+model Therapist {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  branchId        String   @map("branch_id")
+  specialty       String?
+  cpf             String?  @unique
+  phone           String?
+  secondaryEmail  String?  @map("secondary_email")
+  status          String   @default("active")
+  admissionDate   DateTime? @map("admission_date")
+  terminationDate DateTime? @map("termination_date")
+  bankInfo        String?  @map("bank_info") // JSON encriptado
+  avatarUrl       String?  @map("avatar_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  students        Student[]
+  appointments    Appointment[]
+  assessments     InitialAssessment[]
+  mediaFiles      MediaFile[]
+
+  @@map("therapists")
+}
+
+// ========================================
+// MODELO DE ALUNOS/PACIENTES
+// ========================================
+model Student {
+  id                String   @id @default(uuid())
+  branchId          String   @map("branch_id")
+  therapistId       String   @map("therapist_id")
+  name              String
+  dateOfBirth       DateTime? @map("date_of_birth")
+  cpf               String?  @unique
+  rg                String?
+  guardianName      String?  @map("guardian_name")
+  guardianPhone     String?  @map("guardian_phone")
+  guardianEmail     String?  @map("guardian_email")
+  address           String?
+  neighborhood      String?
+  city              String?
+  postalCode        String?  @map("postal_code")
+  status            String   @default("active")
+  sessionsPerMonth  Int?     @map("sessions_per_month")
+  monthlyValue      Decimal? @map("monthly_value") @db.Decimal(10, 2)
+  paymentMethod     String?  @map("payment_method")
+  taxPercentage     Decimal? @map("tax_percentage") @db.Decimal(5, 2)
+  wantsMonthlyNfe   Boolean  @default(false) @map("wants_monthly_nfe")
+  planObservations  String?  @map("plan_observations")
+  avatarUrl         String?  @map("avatar_url")
+  lastActivityDate  DateTime? @map("last_activity_date")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  branch            Branch   @relation(fields: [branchId], references: [id])
+  therapist         Therapist @relation(fields: [therapistId], references: [id])
+  appointments      Appointment[]
+  transactions      FinancialTransaction[]
+  assessments       InitialAssessment[]
+  mediaFiles        MediaFile[]
+
+  @@map("students")
+}
+
+// ========================================
+// MODELO DE AGENDAMENTOS
+// ========================================
+model Appointment {
+  id                  String   @id @default(uuid())
+  branchId            String   @map("branch_id")
+  studentId           String   @map("student_id")
+  therapistId         String   @map("therapist_id")
+  dateTime            DateTime @map("date_time")
+  service             String?
+  status              String   @default("scheduled")
+  notes               String?
+  cancellationReason  String?  @map("cancellation_reason")
+  cancelledBy         String?  @map("cancelled_by")
+  reminderSent        Boolean  @default(false) @map("reminder_sent")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  branch              Branch   @relation(fields: [branchId], references: [id])
+  student             Student  @relation(fields: [studentId], references: [id])
+  therapist           Therapist @relation(fields: [therapistId], references: [id])
+
+  @@map("appointments")
+}
+
+// ========================================
+// MODELO DE TRANSAÇÕES FINANCEIRAS
+// ========================================
+model FinancialTransaction {
+  id              String   @id @default(uuid())
+  branchId        String   @map("branch_id")
+  studentId       String?  @map("student_id")
+  date            DateTime
+  description     String
+  amount          Decimal  @db.Decimal(10, 2)
+  taxPercentage   Decimal? @map("tax_percentage") @db.Decimal(5, 2)
+  type            String   // 'revenue' or 'expense'
+  category        String
+  status          String   @default("pending")
+  nfeNumber       String?  @map("nfe_number")
+  dueDate         DateTime? @map("due_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  student         Student? @relation(fields: [studentId], references: [id])
+
+  @@map("financial_transactions")
+}
+
+// ========================================
+// MODELO DE AVALIAÇÕES INICIAIS
+// ========================================
+model InitialAssessment {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  therapistId String   @map("therapist_id")
+  branchId    String   @map("branch_id")
+  dateTime    DateTime @map("date_time")
+  status      String   @default("scheduled")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  student     Student  @relation(fields: [studentId], references: [id])
+  therapist   Therapist @relation(fields: [therapistId], references: [id])
+  branch      Branch   @relation(fields: [branchId], references: [id])
+
+  @@map("initial_assessments")
+}
+
+// ========================================
+// MODELO DE LOG DE ATIVIDADES
+// ========================================
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  action      String
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+// ========================================
+// MODELO DE ARQUIVOS DE MÍDIA
+// ========================================
+model MediaFile {
+  id          String   @id @default(uuid())
+  studentId   String   @map("student_id")
+  therapistId String   @map("therapist_id")
+  fileUrl     String   @map("file_url")
+  fileType    String?  @map("file_type")
+  description String?
+  uploadDate  DateTime @default(now()) @map("upload_date")
+
+  student     Student  @relation(fields: [studentId], references: [id])
+  therapist   Therapist @relation(fields: [therapistId], references: [id])
+
+  @@map("media_files")
+}

@@ -5,58 +5,56 @@ import { NavItemType } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBranch } from '../../contexts/BranchContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { ClinicLogo, ArrowLeftOnRectangleIcon, ChevronDownIcon, BuildingOfficeIcon, SunIcon, MoonIcon, QuestionMarkCircleIcon } from '../icons/HeroIcons'; 
+import { ClinicLogo, ArrowLeftOnRectangleIcon, ChevronDownIcon, BuildingOfficeIcon, SunIcon, MoonIcon, QuestionMarkCircleIcon } from '../icons/HeroIcons';
 
 interface SidebarProps {
   navItems: NavItemType[];
 }
 
 const NavMenuItem: React.FC<{ item: NavItemType; isSubItem?: boolean }> = ({ item, isSubItem = false }) => {
-    const location = useLocation();
-    const isActive = item.path ? location.pathname.startsWith(item.path) : false;
+  const location = useLocation();
+  const isActive = item.path ? location.pathname.startsWith(item.path) : false;
 
-    const navLinkClasses = `flex items-center space-x-3 rounded-md transition-colors duration-150 ease-in-out dark:text-slate-200 ${
-        isSubItem 
-        ? `p-2 text-sm ${isActive ? 'bg-primary-light bg-opacity-90 font-medium text-white' : 'hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-700'}`
-        : `p-3 ${isActive ? 'bg-primary-light bg-opacity-90 font-medium text-white' : 'hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-700'}`
+  const navLinkClasses = `flex items-center space-x-3 rounded-md transition-colors duration-150 ease-in-out dark:text-slate-200 ${isSubItem
+    ? `p-2 text-sm ${isActive ? 'bg-primary-light bg-opacity-90 font-medium text-white' : 'hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-700'}`
+    : `p-3 ${isActive ? 'bg-primary-light bg-opacity-90 font-medium text-white' : 'hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-700'}`
     }`;
 
-    return (
-        <NavLink to={item.path!} className={navLinkClasses}>
-            <item.icon className={isSubItem ? 'h-4 w-4' : 'h-5 w-5'} />
-            <span>{item.label}</span>
-        </NavLink>
-    );
+  return (
+    <NavLink to={item.path!} className={navLinkClasses}>
+      <item.icon className={isSubItem ? 'h-4 w-4' : 'h-5 w-5'} />
+      <span>{item.label}</span>
+    </NavLink>
+  );
 };
 
 const CollapsibleNavMenu: React.FC<{ item: NavItemType, openMenus: Record<string, boolean>, toggleMenu: (label: string) => void }> = ({ item, openMenus, toggleMenu }) => {
-    const location = useLocation();
-    const isChildActive = item.children?.some(child => child.path && location.pathname.startsWith(child.path)) ?? false;
-    const isOpen = openMenus[item.label] === true;
+  const location = useLocation();
+  const isChildActive = item.children?.some(child => child.path && location.pathname.startsWith(child.path)) ?? false;
+  const isOpen = openMenus[item.label] === true;
 
-    return (
-        <div>
-            <button
-                onClick={() => toggleMenu(item.label)}
-                className={`w-full flex items-center justify-between p-3 rounded-md transition-colors duration-150 ease-in-out hover:bg-primary-light hover:bg-opacity-20 dark:text-slate-200 dark:hover:bg-slate-700 ${
-                    isChildActive && !isOpen ? 'bg-primary-light bg-opacity-40' : ''
-                }`}
-            >
-                <div className="flex items-center space-x-3">
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                </div>
-                <ChevronDownIcon className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {isOpen && (
-                <div className="pl-6 pt-1 pb-1 space-y-1 mt-1">
-                    {item.children?.map(child => (
-                        <NavMenuItem key={child.label} item={child} isSubItem={true} />
-                    ))}
-                </div>
-            )}
+  return (
+    <div>
+      <button
+        onClick={() => toggleMenu(item.label)}
+        className={`w-full flex items-center justify-between p-3 rounded-md transition-colors duration-150 ease-in-out hover:bg-primary-light hover:bg-opacity-20 dark:text-slate-200 dark:hover:bg-slate-700 ${isChildActive && !isOpen ? 'bg-primary-light bg-opacity-40' : ''
+          }`}
+      >
+        <div className="flex items-center space-x-3">
+          <item.icon className="h-5 w-5" />
+          <span>{item.label}</span>
         </div>
-    );
+        <ChevronDownIcon className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="pl-6 pt-1 pb-1 space-y-1 mt-1">
+          {item.children?.map(child => (
+            <NavMenuItem key={child.label} item={child} isSubItem={true} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
@@ -68,11 +66,11 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const activeMenu = navItems.find(item => 
-        item.children?.some(child => child.path && location.pathname.startsWith(child.path))
+    const activeMenu = navItems.find(item =>
+      item.children?.some(child => child.path && location.pathname.startsWith(child.path))
     );
     if (activeMenu && !openMenus[activeMenu.label]) {
-        setOpenMenus(prev => ({ ...prev, [activeMenu.label]: true }));
+      setOpenMenus(prev => ({ ...prev, [activeMenu.label]: true }));
     }
   }, [location, navItems]);
 
@@ -100,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         <h1 className="text-xl font-semibold">Equipe Rafael Barros</h1>
       </div>
 
-      {user?.role === 'admin' && !branchesLoading && (
+      {user?.role === 'ADMIN' && !branchesLoading && (
         <div className="p-4 border-b border-primary-light border-opacity-30 dark:border-slate-700">
           <label htmlFor="branch-selector" className="text-xs font-semibold text-primary-light dark:text-slate-400 opacity-80 mb-1 block uppercase">
             Filial Ativa
@@ -120,11 +118,11 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
                 </option>
               ))}
             </select>
-             <ChevronDownIcon className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-primary-light dark:text-slate-400 pointer-events-none" />
+            <ChevronDownIcon className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-primary-light dark:text-slate-400 pointer-events-none" />
           </div>
         </div>
       )}
-      
+
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) =>
           item.children ? (
@@ -134,38 +132,38 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
           )
         )}
       </nav>
-      
+
       {user && (
         <div className="p-3 border-t border-primary-light border-opacity-30 dark:border-slate-700">
-           {/* Help/Manual Link */}
-           <NavLink 
-                to="/manual" 
-                className={({isActive}) => `flex items-center space-x-3 p-3 mb-2 rounded-md transition-colors duration-150 ease-in-out ${isActive ? 'bg-primary-light bg-opacity-90 text-white' : 'text-primary-light hover:bg-primary-light hover:bg-opacity-20 dark:text-slate-400 dark:hover:bg-slate-700'}`}
-            >
-                <QuestionMarkCircleIcon className="h-5 w-5" />
-                <span>Manual do Sistema</span>
-           </NavLink>
+          {/* Help/Manual Link */}
+          <NavLink
+            to="/manual"
+            className={({ isActive }) => `flex items-center space-x-3 p-3 mb-2 rounded-md transition-colors duration-150 ease-in-out ${isActive ? 'bg-primary-light bg-opacity-90 text-white' : 'text-primary-light hover:bg-primary-light hover:bg-opacity-20 dark:text-slate-400 dark:hover:bg-slate-700'}`}
+          >
+            <QuestionMarkCircleIcon className="h-5 w-5" />
+            <span>Manual do Sistema</span>
+          </NavLink>
 
-           <div className="flex justify-between items-center px-2 py-1 mb-2">
-                <div>
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-primary-light opacity-80 dark:text-slate-400">{user.role === 'admin' ? 'Administrador' : 'Terapeuta'}</p>
-                </div>
-                <button
-                   onClick={toggleTheme}
-                   className="p-2 rounded-full hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-600 transition-colors"
-                   aria-label={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
-                >
-                   {theme === 'light' ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
-                </button>
+          <div className="flex justify-between items-center px-2 py-1 mb-2">
+            <div>
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-xs text-primary-light opacity-80 dark:text-slate-400">{user.role === 'ADMIN' ? 'Administrador' : 'Terapeuta'}</p>
             </div>
-           <button
-             onClick={handleLogout}
-             className="w-full flex items-center justify-center space-x-3 p-3 rounded-md transition-colors duration-150 ease-in-out bg-primary-dark dark:bg-slate-700 hover:bg-red-600"
-           >
-             <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-             <span>Sair</span>
-           </button>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-primary-light hover:bg-opacity-20 dark:hover:bg-slate-600 transition-colors"
+              aria-label={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+            >
+              {theme === 'light' ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
+            </button>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-3 p-3 rounded-md transition-colors duration-150 ease-in-out bg-primary-dark dark:bg-slate-700 hover:bg-red-600"
+          >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            <span>Sair</span>
+          </button>
         </div>
       )}
 

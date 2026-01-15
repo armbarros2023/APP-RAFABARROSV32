@@ -238,7 +238,7 @@ const PatientManagementPage: React.FC = () => {
       let filtered = students;
 
       // Filter by Branch (for admins)
-      if (user?.role === 'admin' && selectedBranch) {
+      if (user?.role === 'ADMIN' && selectedBranch) {
           filtered = filtered.filter(s => s.branchId === selectedBranch.id);
       }
 
@@ -360,7 +360,7 @@ const PatientManagementPage: React.FC = () => {
                       </select>
                   </div>
 
-                  {user.role === 'admin' && (
+                  {user.role === 'ADMIN' && (
                       <div className="w-full md:w-1/3 relative">
                           <FunnelIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                           <select 

@@ -1,0 +1,50 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Enviar o schema compactado como um nome diferente
+spawn scp -o StrictHostKeyChecking=no schema.tar.gz root@69.62.103.58:/var/www/clinicrafabarros-backend/prisma/schema_package.tar.gz
+expect "password:"
+send "$password\r"
+expect eof
+
+# 2. Enviar o script 
+spawn scp -o StrictHostKeyChecking=no create-rafael-admin.js root@69.62.103.58:/var/www/clinicrafabarros-backend/
+expect "password:"
+send "$password\r"
+expect eof
+
+# 3. Conectar e fazer a troca de arquivos
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/prisma/\r"
+
+# Backup e remoção forçada
+send "mv schema.prisma schema.prisma.bak\r"
+send "rm schema.prisma\r"
+
+# Extrair o novo
+send "tar -xzf schema_package.tar.gz\r"
+# O tar extrai como "schema.prisma" (nome original)
+send "rm schema_package.tar.gz\r"
+
+# Verificar se arquivo existe e tamanho (opcional visualmente para nós)
+send "ls -la schema.prisma\r"
+
+send "cd ..\r"
+
+# Regenerar
+send "rm -rf node_modules/.prisma\r"
+send "npx prisma generate\r"
+
+# Criar usuario
+send "node create-rafael-admin.js\r"
+
+# Limpar
+send "rm create-rafael-admin.js\r"
+send "exit\r"
+expect eof

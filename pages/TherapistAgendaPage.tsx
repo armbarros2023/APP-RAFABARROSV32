@@ -271,7 +271,7 @@ const TherapistAgendaPage: React.FC = () => {
     }
 
     // Role-based logic and Therapist Filter
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
         // Admin can filter by specific therapist
         if (selectedTherapistFilter) {
             visibleAppointments = visibleAppointments.filter(app => app.therapistId === selectedTherapistFilter);
@@ -351,7 +351,7 @@ const TherapistAgendaPage: React.FC = () => {
   };
 
   const handleSaveAppointment = (appointmentData: Partial<Appointment>, method: 'direct' | 'invite') => {
-    if(!user || (user.role === 'admin' && !selectedBranch)) {
+    if(!user || (user.role === 'ADMIN' && !selectedBranch)) {
         alert("Administradores devem selecionar uma filial para criar um agendamento.");
         return;
     }
@@ -503,7 +503,7 @@ const TherapistAgendaPage: React.FC = () => {
               </div>
               
               {/* Therapist Filter - Only visible to Admins */}
-              {user.role === 'admin' && (
+              {user.role === 'ADMIN' && (
                   <div className="w-full md:w-1/3">
                       <Select 
                           value={selectedTherapistFilter}

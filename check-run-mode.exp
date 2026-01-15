@@ -1,0 +1,23 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Conectar e ler arquivos
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/\r"
+
+send "cat package.json\r"
+# Tentar nome comum
+send "cat pm2.config.js\r"
+# Tentar nome comum
+send "cat ecosystem.config.js\r"
+# Ver processo rodando
+send "pm2 list\r" 
+
+send "exit\r"
+expect eof

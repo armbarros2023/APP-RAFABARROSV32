@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "B075@#ax/980tec"
+
+# 1. Conectar e listar estrutura
+spawn ssh -o StrictHostKeyChecking=no root@69.62.103.58
+expect "password:"
+send "$password\r"
+expect "#"
+
+send "cd /var/www/clinicrafabarros-backend/src\r"
+send "find . -maxdepth 2 -not -path '*/.*'\r"
+
+# Tentar achar onde está o login
+send "grep -r 'login' .\r"
+
+send "exit\r"
+expect eof
