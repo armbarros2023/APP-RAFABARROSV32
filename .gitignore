@@ -54,6 +54,7 @@ backend/prisma/migrations/
 *.tar.gz
 backend-deploy.tar.gz
 dist.tar.gz
+.superpowers/
 
 # PM2
 .pm2/
