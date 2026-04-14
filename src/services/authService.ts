@@ -30,13 +30,10 @@ class AuthService {
     /**
      * Fazer login
      */
-    async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        console.log('🔐 Tentando login com:', credentials);
-        const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-        console.log('✅ Login bem-sucedido:', response.data);
+    async login(credentials: LoginCredentials): Promise<{ user: User }> {
+        const response = await apiClient.post<{ user: User }>('/auth/login', credentials);
 
-        // Salvar token e usuário no localStorage
-        localStorage.setItem('token', response.data.token);
+        // Salvar usuário no localStorage para persistência de estado (não sensível)
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
         return response.data;
@@ -45,11 +42,10 @@ class AuthService {
     /**
      * Registrar novo usuário
      */
-    async register(data: RegisterData): Promise<AuthResponse> {
-        const response = await apiClient.post<AuthResponse>('/auth/register', data);
+    async register(data: RegisterData): Promise<{ user: User }> {
+        const response = await apiClient.post<{ user: User }>('/auth/register', data);
 
-        // Salvar token e usuário no localStorage
-        localStorage.setItem('token', response.data.token);
+        // Salvar usuário no localStorage
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
         return response.data;
@@ -70,16 +66,21 @@ class AuthService {
     /**
      * Fazer logout
      */
-    logout(): void {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    async logout(): Promise<void> {
+        try {
+            await apiClient.post('/auth/logout');
+        } finally {
+            localStorage.removeItem('user');
+        }
     }
 
     /**
      * Verificar se está autenticado
+     * Observação: Com cookies, a verificação final é feita pelo backend nas requisições.
+     * Mantemos o check do user no localStorage para UI.
      */
     isAuthenticated(): boolean {
-        return !!localStorage.getItem('token');
+        return !!localStorage.getItem('user');
     }
 
     /**
@@ -94,13 +95,6 @@ class AuthService {
         } catch {
             return null;
         }
-    }
-
-    /**
-     * Obter token do localStorage
-     */
-    getToken(): string | null {
-        return localStorage.getItem('token');
     }
 }
 

@@ -62,3 +62,11 @@ dist.tar.gz
 # Database
 *.db
 *.sqlite
+
+# ⚠️ SEGURANÇA: Scripts com credenciais hardcoded
+*.exp
+create-admin.js
+reset-password-force.js
+force-admin.js
+backend/prisma/dev.db
+backend/prisma/*.db-journal

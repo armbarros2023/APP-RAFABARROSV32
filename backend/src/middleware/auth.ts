@@ -16,17 +16,15 @@ export const authMiddleware = (
     next: NextFunction
 ): void => {
     try {
-        const authHeader = req.headers.authorization;
+        let token = req.cookies?.token;
 
-        if (!authHeader) {
-            res.status(401).json({ error: 'No token provided' });
-            return;
+        if (!token && req.headers.authorization) {
+            const parts = req.headers.authorization.split(' ');
+            if (parts.length === 2) token = parts[1];
         }
 
-        const [, token] = authHeader.split(' ');
-
         if (!token) {
-            res.status(401).json({ error: 'Invalid token format' });
+            res.status(401).json({ error: 'No token provided' });
             return;
         }
 

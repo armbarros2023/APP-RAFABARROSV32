@@ -1,42 +1,29 @@
 // API Client para comunicação com o backend
 import axios from 'axios';
 
-// Base URL da API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-console.log('🔗 API Base URL:', API_BASE_URL);
+// Em desenvolvimento local, sempre usar o proxy do Vite para evitar
+// depender da API remota configurada para produção/homologação.
+const API_BASE_URL = import.meta.env.DEV
+    ? '/api'
+    : import.meta.env.VITE_API_URL || '/api';
 
 // Criar instância do axios
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
+    timeout: 15000,
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
-
-// Interceptor para adicionar token JWT em todas as requisições
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
 // Interceptor para tratar erros de autenticação
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token inválido ou expirado
-            localStorage.removeItem('token');
+            // Token inválido ou expirado - limpar estado local
             localStorage.removeItem('user');
-            // Não forçar recarregamento da página, deixar o estado do React lidar com isso
-            // window.location.href = '/login'; 
         }
         return Promise.reject(error);
     }

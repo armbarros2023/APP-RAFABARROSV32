@@ -9,7 +9,7 @@ const envSchema = z.object({
     DATABASE_URL: z.string(),
     JWT_SECRET: z.string(),
     JWT_EXPIRES_IN: z.string().default('7d'),
-    CORS_ORIGIN: z.string().default('http://localhost:5173'),
+    CORS_ORIGIN: z.string().default('http://localhost:3000'),
     ADMIN_NAME: z.string().optional(),
     ADMIN_EMAIL: z.string().email().optional(),
     ADMIN_PASSWORD: z.string().optional(),

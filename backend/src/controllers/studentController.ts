@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 
 const studentSchema = z.object({
@@ -30,10 +31,10 @@ export const getAllStudents = async (req: Request, res: Response): Promise<void>
     try {
         const { branchId, therapistId, status } = req.query;
 
-        const where: any = {};
-        if (branchId) where.branchId = branchId;
-        if (therapistId) where.therapistId = therapistId;
-        if (status) where.status = status;
+        const where: Prisma.StudentWhereInput = {};
+        if (typeof branchId === 'string') where.branchId = branchId;
+        if (typeof therapistId === 'string') where.therapistId = therapistId;
+        if (typeof status === 'string') where.status = status as any;
 
         const students = await prisma.student.findMany({
             where,

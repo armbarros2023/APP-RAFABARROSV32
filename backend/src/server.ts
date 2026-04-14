@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
@@ -39,6 +40,7 @@ app.use(cors({
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Request logging (development only)
 if (env.NODE_ENV === 'development') {

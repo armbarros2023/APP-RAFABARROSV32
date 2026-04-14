@@ -13,8 +13,14 @@ const loginSchema = z.object({
 const registerSchema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(['ADMIN', 'THERAPIST']).optional(),
+    password: z.string()
+        .min(8, 'Senha deve ter no mínimo 8 caracteres')
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+            'Senha deve conter maiúscula, minúscula e número'
+        ),
+    // SEGURANÇA: role removido - sempre THERAPIST.
+    // Somente admin pode promover via painel.
 });
 
 export const login = async (req: Request, res: Response): Promise<void> => {
@@ -31,24 +37,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             where: { email },
         });
 
-        console.log(`[LOGIN DEBUG] Tentativa para: ${email}`);
+
 
         if (!user) {
-            console.log('[LOGIN DEBUG] Usuário NÃO encontrado no banco.');
+
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
 
-        console.log(`[LOGIN DEBUG] Usuário encontrado: ${user.id}, Role: ${user.role}`);
-        console.log(`[LOGIN DEBUG] Hash no banco: ${user.password.substring(0, 20)}...`);
+
 
         // Verify password
         const isPasswordValid = await comparePassword(password, user.password);
 
-        console.log(`[LOGIN DEBUG] Senha válida? ${isPasswordValid}`);
+
 
         if (!isPasswordValid) {
-            console.log('[LOGIN DEBUG] Senha INVÁLIDA.');
+
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
@@ -60,8 +65,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             role: user.role,
         });
 
+        // Set HttpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         res.json({
-            token,
             user: {
                 id: user.id,
                 name: user.name,
@@ -81,7 +93,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { name, email, password, role } = registerSchema.parse(req.body);
+        const { name, email, password } = registerSchema.parse(req.body);
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -97,12 +109,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         const hashedPassword = await hashPassword(password);
 
         // Create user
+        // SEGURANÇA: role sempre THERAPIST - não aceitar do body
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: role || 'THERAPIST',
+                role: 'THERAPIST',
             },
         });
 
@@ -113,8 +126,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             role: user.role,
         });
 
+        // Set HttpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         res.status(201).json({
-            token,
             user: {
                 id: user.id,
                 name: user.name,
@@ -154,10 +174,15 @@ export const me = async (req: Request, res: Response): Promise<void> => {
             res.status(404).json({ error: 'User not found' });
             return;
         }
-
         res.json(user);
     } catch (error) {
         console.error('Me error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const logout = async (_req: Request, res: Response): Promise<void> => {
+    res.clearCookie('token');
+    res.json({ message: 'Logged out successfully' });
+};
+
