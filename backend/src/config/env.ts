@@ -10,6 +10,7 @@ const envSchema = z.object({
     JWT_SECRET: z.string(),
     JWT_EXPIRES_IN: z.string().default('7d'),
     CORS_ORIGIN: z.string().default('http://localhost:3000'),
+    GEMINI_API_KEY: z.string().optional(),
     ADMIN_NAME: z.string().optional(),
     ADMIN_EMAIL: z.string().email().optional(),
     ADMIN_PASSWORD: z.string().optional(),

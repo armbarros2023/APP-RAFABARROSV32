@@ -180,7 +180,7 @@ const SystemManualPage: React.FC = () => {
                             <h2 className="text-2xl font-bold text-sky-700 dark:text-sky-400">5. Inteligência Artificial (Gemini)</h2>
                         </div>
                         <p className="mb-4 text-slate-600 dark:text-slate-300">
-                            Integração com a API Google Gemini via SDK <code>@google/genai</code>.
+                            Integração com a API Google Gemini via backend autenticado. A chave da IA fica protegida no servidor, fora do bundle do navegador.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="border border-purple-200 dark:border-purple-800 p-4 rounded-lg bg-purple-50 dark:bg-purple-900/10">

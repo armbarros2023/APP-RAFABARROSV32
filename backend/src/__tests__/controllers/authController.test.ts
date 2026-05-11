@@ -54,11 +54,12 @@ test('login normaliza email e retorna token quando as credenciais sao validas', 
 
         await authController.login(req, res);
 
-        const payload = verifyToken((res.body as { token: string }).token);
+        const payload = verifyToken(String(res.cookies.token.value));
 
         assert.equal(res.statusCode, 200);
         assert.deepEqual(receivedArgs, { where: { email: 'admin@clinic.com' } });
         assert.equal(payload.email, 'admin@clinic.com');
+        assert.equal((res.cookies.token.options as { httpOnly: boolean }).httpOnly, true);
         assert.equal((res.body as { user: { role: string } }).user.role, 'ADMIN');
     } finally {
         userModel.findUnique = originalFindUnique;
@@ -159,6 +160,7 @@ test('register cria usuario com hash e role padrao THERAPIST', async () => {
         assert.equal(createArgs.data.role, 'THERAPIST');
         assert.notEqual(storedPassword, 'SenhaForte@123');
         assert.equal(await comparePassword('SenhaForte@123', storedPassword), true);
+        assert.ok(res.cookies.token.value);
         assert.equal((res.body as { user: { email: string } }).user.email, 'nova@clinic.com');
     } finally {
         userModel.findUnique = originalFindUnique;

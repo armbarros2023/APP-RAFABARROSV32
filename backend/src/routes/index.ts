@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import * as authController from '../controllers/authController';
+import * as aiController from '../controllers/aiController';
 import * as appointmentController from '../controllers/appointmentController';
 import * as branchController from '../controllers/branchController';
 import * as financialTransactionController from '../controllers/financialTransactionController';
@@ -8,6 +10,14 @@ import * as staffController from '../controllers/staffController';
 import { authMiddleware, adminOnly } from '../middleware/auth';
 
 const router = Router();
+
+const aiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 12,
+    message: { error: 'Muitas solicitacoes de IA. Aguarde um instante e tente novamente.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 // ============================================
 // PUBLIC ROUTES
@@ -66,6 +76,10 @@ router.get('/financial-transactions/:id', authMiddleware, financialTransactionCo
 router.post('/financial-transactions', authMiddleware, adminOnly, financialTransactionController.createFinancialTransaction);
 router.put('/financial-transactions/:id', authMiddleware, adminOnly, financialTransactionController.updateFinancialTransaction);
 router.delete('/financial-transactions/:id', authMiddleware, adminOnly, financialTransactionController.deleteFinancialTransaction);
+
+// AI Assistant
+router.post('/ai/student-summary', authMiddleware, aiLimiter, aiController.generateStudentSummary);
+router.post('/ai/activity-suggestions', authMiddleware, aiLimiter, aiController.suggestActivities);
 
 // TODO: Add more routes for:
 // - Student Invoices
