@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../config/database';
+import { getTherapistScopeOrDeny } from '../utils/accessControl';
 
 const branchSchema = z.object({
     name: z.string().min(2),
@@ -14,7 +15,10 @@ const branchSchema = z.object({
 
 export const getAllBranches = async (req: Request, res: Response): Promise<void> => {
     try {
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
         const branches = await prisma.branch.findMany({
+            where: scope ? { id: scope.branchId } : undefined,
             orderBy: { createdAt: 'desc' },
         });
         res.json(branches);
@@ -27,6 +31,12 @@ export const getAllBranches = async (req: Request, res: Response): Promise<void>
 export const getBranchById = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+        if (scope && id !== scope.branchId) {
+            res.status(403).json({ error: 'Access denied' });
+            return;
+        }
 
         const branch = await prisma.branch.findUnique({
             where: { id },

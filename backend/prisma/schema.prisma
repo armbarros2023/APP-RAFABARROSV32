@@ -27,6 +27,7 @@ model User {
   activityLogs StudentActivityLog[]
   mediaUploads StudentMedia[]
 
+  @@index([role])
   @@map("users")
 }
 
@@ -60,6 +61,7 @@ model Branch {
   therapistPayments    TherapistPayment[]
   initialAssessments   InitialAssessment[]
 
+  @@index([createdAt])
   @@map("branches")
 }
 
@@ -92,6 +94,8 @@ model StaffMember {
   payments     TherapistPayment[]
   assessments  InitialAssessment[]
 
+  @@index([branchId])
+  @@index([status])
   @@map("staff_members")
 }
 
@@ -145,6 +149,10 @@ model Student {
   assessments      InitialAssessment[]
   transactions     FinancialTransaction[]
 
+  @@index([branchId])
+  @@index([therapistId])
+  @@index([status])
+  @@index([createdAt])
   @@map("students")
 }
 
@@ -188,6 +196,11 @@ model Appointment {
   therapist StaffMember? @relation(fields: [therapistId], references: [id])
   student   Student?     @relation(fields: [studentId], references: [id])
 
+  @@index([branchId])
+  @@index([therapistId])
+  @@index([studentId])
+  @@index([dateTime])
+  @@index([status])
   @@map("appointments")
 }
 
@@ -222,6 +235,11 @@ model FinancialTransaction {
   branch  Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
   student Student? @relation(fields: [studentId], references: [id])
 
+  @@index([branchId])
+  @@index([studentId])
+  @@index([date])
+  @@index([status])
+  @@index([type])
   @@map("financial_transactions")
 }
 
@@ -266,6 +284,10 @@ model StudentInvoice {
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([studentId])
+  @@index([branchId])
+  @@index([status])
+  @@index([dueDate])
   @@map("student_invoices")
 }
 
@@ -296,6 +318,10 @@ model TherapistPayment {
   therapist StaffMember @relation(fields: [therapistId], references: [id], onDelete: Cascade)
   branch    Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([therapistId])
+  @@index([branchId])
+  @@index([period])
+  @@index([status])
   @@map("therapist_payments")
 }
 
@@ -327,6 +353,11 @@ model InitialAssessment {
   therapist StaffMember  @relation(fields: [therapistId], references: [id])
   student   Student?     @relation(fields: [studentId], references: [id])
 
+  @@index([studentId])
+  @@index([branchId])
+  @@index([therapistId])
+  @@index([dateTime])
+  @@index([status])
   @@map("initial_assessments")
 }
 
@@ -351,6 +382,9 @@ model StudentActivityLog {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   therapist User    @relation(fields: [therapistId], references: [id])
 
+  @@index([studentId])
+  @@index([therapistId])
+  @@index([date])
   @@map("student_activity_logs")
 }
 
@@ -372,6 +406,9 @@ model StudentMedia {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   therapist User    @relation(fields: [therapistId], references: [id])
 
+  @@index([studentId])
+  @@index([therapistId])
+  @@index([uploadDate])
   @@map("student_media")
 }
 

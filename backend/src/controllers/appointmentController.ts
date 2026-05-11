@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../config/database';
+import { getTherapistScopeOrDeny } from '../utils/accessControl';
 
 const appointmentSchema = z.object({
     branchId: z.string().uuid(),
@@ -20,16 +21,28 @@ const appointmentSchema = z.object({
 export const getAllAppointments = async (req: Request, res: Response): Promise<void> => {
     try {
         const { branchId, therapistId, status } = req.query;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const where: Record<string, unknown> = {};
         if (branchId) where.branchId = branchId;
         if (therapistId) where.therapistId = therapistId;
         if (status) where.status = status;
+        if (scope) {
+            where.branchId = scope.branchId;
+            where.therapistId = scope.id;
+        }
 
-        const appointments = await prisma.appointment.findMany({
+        const query: any = {
             where,
             orderBy: { dateTime: 'asc' },
-        });
+        };
+        if (req.query.limit || req.query.offset) {
+            query.take = Math.min(Number(req.query.limit) || 100, 200);
+            query.skip = Math.max(Number(req.query.offset) || 0, 0);
+        }
+
+        const appointments = await prisma.appointment.findMany(query);
 
         res.json(appointments);
     } catch (error) {
@@ -41,6 +54,8 @@ export const getAllAppointments = async (req: Request, res: Response): Promise<v
 export const getAppointmentById = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const appointment = await prisma.appointment.findUnique({
             where: { id },
@@ -48,6 +63,10 @@ export const getAppointmentById = async (req: Request, res: Response): Promise<v
 
         if (!appointment) {
             res.status(404).json({ error: 'Appointment not found' });
+            return;
+        }
+        if (scope && (appointment.branchId !== scope.branchId || appointment.therapistId !== scope.id)) {
+            res.status(403).json({ error: 'Access denied' });
             return;
         }
 
@@ -61,12 +80,15 @@ export const getAppointmentById = async (req: Request, res: Response): Promise<v
 export const createAppointment = async (req: Request, res: Response): Promise<void> => {
     try {
         const data = appointmentSchema.parse(req.body);
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const appointment = await prisma.appointment.create({
             data: {
                 ...data,
                 dateTime: new Date(data.dateTime),
-                therapistId: data.therapistId ?? null,
+                branchId: scope?.branchId ?? data.branchId,
+                therapistId: scope?.id ?? data.therapistId ?? null,
             },
         });
 
@@ -85,13 +107,31 @@ export const updateAppointment = async (req: Request, res: Response): Promise<vo
     try {
         const { id } = req.params;
         const data = appointmentSchema.partial().parse(req.body);
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+
+        if (scope) {
+            const existing = await prisma.appointment.findUnique({
+                where: { id },
+                select: { branchId: true, therapistId: true },
+            });
+            if (!existing) {
+                res.status(404).json({ error: 'Appointment not found' });
+                return;
+            }
+            if (existing.branchId !== scope.branchId || existing.therapistId !== scope.id) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
+        }
 
         const appointment = await prisma.appointment.update({
             where: { id },
             data: {
                 ...data,
                 dateTime: data.dateTime ? new Date(data.dateTime) : undefined,
-                therapistId: data.therapistId === undefined ? undefined : data.therapistId,
+                branchId: scope ? undefined : data.branchId,
+                therapistId: scope ? undefined : data.therapistId === undefined ? undefined : data.therapistId,
             },
         });
 
@@ -109,6 +149,23 @@ export const updateAppointment = async (req: Request, res: Response): Promise<vo
 export const deleteAppointment = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+
+        if (scope) {
+            const existing = await prisma.appointment.findUnique({
+                where: { id },
+                select: { branchId: true, therapistId: true },
+            });
+            if (!existing) {
+                res.status(404).json({ error: 'Appointment not found' });
+                return;
+            }
+            if (existing.branchId !== scope.branchId || existing.therapistId !== scope.id) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
+        }
 
         await prisma.appointment.delete({
             where: { id },

@@ -71,8 +71,8 @@ router.put('/appointments/:id', authMiddleware, appointmentController.updateAppo
 router.delete('/appointments/:id', authMiddleware, appointmentController.deleteAppointment);
 
 // Financial Transactions
-router.get('/financial-transactions', authMiddleware, financialTransactionController.getAllFinancialTransactions);
-router.get('/financial-transactions/:id', authMiddleware, financialTransactionController.getFinancialTransactionById);
+router.get('/financial-transactions', authMiddleware, adminOnly, financialTransactionController.getAllFinancialTransactions);
+router.get('/financial-transactions/:id', authMiddleware, adminOnly, financialTransactionController.getFinancialTransactionById);
 router.post('/financial-transactions', authMiddleware, adminOnly, financialTransactionController.createFinancialTransaction);
 router.put('/financial-transactions/:id', authMiddleware, adminOnly, financialTransactionController.updateFinancialTransaction);
 router.delete('/financial-transactions/:id', authMiddleware, adminOnly, financialTransactionController.deleteFinancialTransaction);

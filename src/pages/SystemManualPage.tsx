@@ -240,7 +240,7 @@ const SystemManualPage: React.FC = () => {
                                             </tr>
                                             <tr>
                                                 <td className="px-4 py-2 font-mono text-xs">equipe_rafael_barros_users_db</td>
-                                                <td className="px-4 py-2">id, email, password_hash (atualmente plain), role</td>
+                                                <td className="px-4 py-2">id, email, password_hash (bcrypt no backend), role</td>
                                                 <td className="px-4 py-2">OneToOne: StaffMember (opcional)</td>
                                             </tr>
                                             <tr>

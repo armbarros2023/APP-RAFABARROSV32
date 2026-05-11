@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../config/database';
+import { getTherapistScopeOrDeny } from '../utils/accessControl';
 
 const staffSchema = z.object({
     branchId: z.string().uuid(),
@@ -21,10 +22,16 @@ const staffSchema = z.object({
 export const getAllStaff = async (req: Request, res: Response): Promise<void> => {
     try {
         const { branchId, status } = req.query;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const where: any = {};
         if (branchId) where.branchId = branchId;
         if (status) where.status = status;
+        if (scope) {
+            where.id = scope.id;
+            where.branchId = scope.branchId;
+        }
 
         const staff = await prisma.staffMember.findMany({
             where,
@@ -55,6 +62,12 @@ export const getAllStaff = async (req: Request, res: Response): Promise<void> =>
 export const getStaffById = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+        if (scope && id !== scope.id) {
+            res.status(403).json({ error: 'Access denied' });
+            return;
+        }
 
         const staff = await prisma.staffMember.findUnique({
             where: { id },

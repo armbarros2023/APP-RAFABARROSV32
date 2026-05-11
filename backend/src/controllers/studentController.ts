@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
+import { getTherapistScopeOrDeny } from '../utils/accessControl';
 
 const studentSchema = z.object({
     branchId: z.string().uuid(),
@@ -30,13 +31,19 @@ const studentSchema = z.object({
 export const getAllStudents = async (req: Request, res: Response): Promise<void> => {
     try {
         const { branchId, therapistId, status } = req.query;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const where: Prisma.StudentWhereInput = {};
         if (typeof branchId === 'string') where.branchId = branchId;
         if (typeof therapistId === 'string') where.therapistId = therapistId;
         if (typeof status === 'string') where.status = status as any;
+        if (scope) {
+            where.branchId = scope.branchId;
+            where.therapistId = scope.id;
+        }
 
-        const students = await prisma.student.findMany({
+        const query: any = {
             where,
             include: {
                 branch: {
@@ -53,7 +60,13 @@ export const getAllStudents = async (req: Request, res: Response): Promise<void>
                 },
             },
             orderBy: { createdAt: 'desc' },
-        });
+        };
+        if (req.query.limit || req.query.offset) {
+            query.take = Math.min(Number(req.query.limit) || 100, 200);
+            query.skip = Math.max(Number(req.query.offset) || 0, 0);
+        }
+
+        const students = await prisma.student.findMany(query);
 
         res.json(students);
     } catch (error) {
@@ -65,6 +78,8 @@ export const getAllStudents = async (req: Request, res: Response): Promise<void>
 export const getStudentById = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         const student = await prisma.student.findUnique({
             where: { id },
@@ -94,6 +109,10 @@ export const getStudentById = async (req: Request, res: Response): Promise<void>
             res.status(404).json({ error: 'Student not found' });
             return;
         }
+        if (scope && (student.branchId !== scope.branchId || student.therapistId !== scope.id)) {
+            res.status(403).json({ error: 'Access denied' });
+            return;
+        }
 
         res.json(student);
     } catch (error) {
@@ -105,9 +124,15 @@ export const getStudentById = async (req: Request, res: Response): Promise<void>
 export const createStudent = async (req: Request, res: Response): Promise<void> => {
     try {
         const data = studentSchema.parse(req.body);
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
 
         // Convert dateOfBirth string to Date if provided
         const studentData: any = { ...data };
+        if (scope) {
+            studentData.branchId = scope.branchId;
+            studentData.therapistId = scope.id;
+        }
         if (data.dateOfBirth) {
             studentData.dateOfBirth = new Date(data.dateOfBirth);
         }
@@ -135,9 +160,30 @@ export const updateStudent = async (req: Request, res: Response): Promise<void> 
     try {
         const { id } = req.params;
         const data = studentSchema.partial().parse(req.body);
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+
+        if (scope) {
+            const existing = await prisma.student.findUnique({
+                where: { id },
+                select: { branchId: true, therapistId: true },
+            });
+            if (!existing) {
+                res.status(404).json({ error: 'Student not found' });
+                return;
+            }
+            if (existing.branchId !== scope.branchId || existing.therapistId !== scope.id) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
+        }
 
         // Convert dateOfBirth string to Date if provided
         const studentData: any = { ...data };
+        if (scope) {
+            delete studentData.branchId;
+            delete studentData.therapistId;
+        }
         if (data.dateOfBirth) {
             studentData.dateOfBirth = new Date(data.dateOfBirth);
         }
@@ -165,6 +211,23 @@ export const updateStudent = async (req: Request, res: Response): Promise<void> 
 export const deleteStudent = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        const scope = await getTherapistScopeOrDeny(req, res);
+        if (scope === false) return;
+
+        if (scope) {
+            const existing = await prisma.student.findUnique({
+                where: { id },
+                select: { branchId: true, therapistId: true },
+            });
+            if (!existing) {
+                res.status(404).json({ error: 'Student not found' });
+                return;
+            }
+            if (existing.branchId !== scope.branchId || existing.therapistId !== scope.id) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
+        }
 
         await prisma.student.delete({
             where: { id },

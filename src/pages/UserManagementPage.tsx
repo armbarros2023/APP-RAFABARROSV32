@@ -171,15 +171,14 @@ const UserManagementPage: React.FC = () => {
         ? crypto.randomUUID()
         : `user-${Date.now()}`;
 
-      const newUser: User & { password?: string } = {
+      const newUser: User = {
         id: newId,
         name: userData.name!,
         email: userData.email!,
         role: userData.role!,
-        password: userData.password // In a real app, this should be hashed here or in backend
       };
       setUsers(prev => [newUser, ...prev]);
-      alert(`Usuário ${newUser.name} criado. A senha foi salva (simulação) para login.`);
+      alert(`Usuário ${newUser.name} criado. A senha deve ser definida pelo fluxo seguro do backend.`);
     }
     setShowUserForm(false); setEditingUser(null);
   };
