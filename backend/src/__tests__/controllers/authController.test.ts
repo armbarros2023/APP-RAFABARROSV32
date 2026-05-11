@@ -12,6 +12,7 @@ const { verifyToken } = require('../../utils/jwt') as typeof import('../../utils
 const userModel = prisma.user as unknown as {
     findUnique: (...args: any[]) => Promise<unknown>;
     create: (...args: any[]) => Promise<unknown>;
+    count: (...args: any[]) => Promise<number>;
 };
 
 const originalConsoleLog = console.log;
@@ -96,19 +97,16 @@ test('login responde 401 quando a senha nao confere', async () => {
     }
 });
 
-test('register responde 409 quando o usuario ja existe', async () => {
-    const originalFindUnique = userModel.findUnique;
+test('register bloqueia cadastro publico depois da inicializacao', async () => {
+    const originalCount = userModel.count;
 
-    userModel.findUnique = async () => ({
-        id: 'user-3',
-        email: 'existente@clinic.com',
-    });
+    userModel.count = async () => 1;
 
     try {
         const req = createMockRequest({
             body: {
-                name: 'Usuario Existente',
-                email: 'existente@clinic.com',
+                name: 'Novo Usuario',
+                email: 'novo@clinic.com',
                 password: 'SenhaForte@123',
             },
         });
@@ -116,36 +114,38 @@ test('register responde 409 quando o usuario ja existe', async () => {
 
         await authController.register(req, res);
 
-        assert.equal(res.statusCode, 409);
-        assert.deepEqual(res.body, { error: 'User already exists' });
+        assert.equal(res.statusCode, 403);
+        assert.deepEqual(res.body, { error: 'Cadastro inicial ja foi concluido.' });
     } finally {
-        userModel.findUnique = originalFindUnique;
+        userModel.count = originalCount;
     }
 });
 
-test('register cria usuario com hash e role padrao THERAPIST', async () => {
+test('register cria primeiro usuario como ADMIN', async () => {
     const originalFindUnique = userModel.findUnique;
     const originalCreate = userModel.create;
+    const originalCount = userModel.count;
     let receivedCreateArgs: unknown;
 
     userModel.findUnique = async () => null;
+    userModel.count = async () => 0;
     userModel.create = async (...args) => {
         [receivedCreateArgs] = args;
 
         return {
             id: 'user-4',
-            name: 'Nova Terapeuta',
-            email: 'nova@clinic.com',
+            name: 'Admin Inicial',
+            email: 'admin-inicial@clinic.com',
             password: (args[0] as { data: { password: string } }).data.password,
-            role: 'THERAPIST',
+            role: 'ADMIN',
         };
     };
 
     try {
         const req = createMockRequest({
             body: {
-                name: 'Nova Terapeuta',
-                email: 'nova@clinic.com',
+                name: 'Admin Inicial',
+                email: 'admin-inicial@clinic.com',
                 password: 'SenhaForte@123',
             },
         });
@@ -157,14 +157,16 @@ test('register cria usuario com hash e role padrao THERAPIST', async () => {
         const storedPassword = createArgs.data.password;
 
         assert.equal(res.statusCode, 201);
-        assert.equal(createArgs.data.role, 'THERAPIST');
+        assert.equal(createArgs.data.role, 'ADMIN');
         assert.notEqual(storedPassword, 'SenhaForte@123');
         assert.equal(await comparePassword('SenhaForte@123', storedPassword), true);
         assert.ok(res.cookies.token.value);
-        assert.equal((res.body as { user: { email: string } }).user.email, 'nova@clinic.com');
+        assert.equal((res.body as { user: { email: string; role: string } }).user.email, 'admin-inicial@clinic.com');
+        assert.equal((res.body as { user: { email: string; role: string } }).user.role, 'ADMIN');
     } finally {
         userModel.findUnique = originalFindUnique;
         userModel.create = originalCreate;
+        userModel.count = originalCount;
     }
 });
 

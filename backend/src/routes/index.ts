@@ -31,9 +31,8 @@ router.get('/health', (req, res) => {
 // Auth routes
 router.post('/auth/login', authController.login);
 router.post('/auth/logout', authController.logout);
-// SEGURANÇA: registro desativado via API por precaução. 
-// Use scripts manuais na VPS para criar administradores iniciais.
-// router.post('/auth/register', authMiddleware, adminOnly, authController.register);
+// Cadastro inicial: abre somente quando o banco ainda nao possui usuarios.
+router.post('/auth/register', authController.register);
 
 // ============================================
 // PROTECTED ROUTES (require authentication)

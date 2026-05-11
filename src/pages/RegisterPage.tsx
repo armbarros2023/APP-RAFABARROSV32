@@ -25,12 +25,12 @@ const RegisterPage: React.FC = () => {
     }
     setError('');
     setLoading(true);
-    const success = await register(name, email, password);
+    const result = await register(name, email, password);
     setLoading(false);
-    if (success) {
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Não foi possível registrar. O e-mail pode já estar em uso.');
+      setError(result.error || 'Não foi possível registrar.');
     }
   };
 
@@ -71,6 +71,9 @@ const RegisterPage: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <p className="-mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Use pelo menos 8 caracteres, com letra maiúscula, minúscula e número.
+            </p>
             <Input
               label="Confirmar Senha"
               id="confirmPassword"

@@ -1,13 +1,19 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 import { User } from '../types';
 import authService from '../services/authService';
+
+type AuthActionResult = {
+  success: boolean;
+  error?: string;
+};
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string) => Promise<AuthActionResult>;
   loginWithGoogle: () => Promise<boolean>;
 }
 
@@ -62,14 +68,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Register new user
    */
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string): Promise<AuthActionResult> => {
     try {
       const response = await authService.register({ name, email, password });
       setUser(response.user);
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Registration failed:', error);
-      return false;
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as { error?: string; details?: Array<{ message?: string }> } | undefined;
+        const detail = data?.details?.[0]?.message;
+        return {
+          success: false,
+          error: detail || data?.error || 'Nao foi possivel registrar.',
+        };
+      }
+      return { success: false, error: 'Nao foi possivel registrar.' };
     }
   };
 

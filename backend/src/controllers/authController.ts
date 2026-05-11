@@ -94,6 +94,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { name, email, password } = registerSchema.parse(req.body);
+        const userCount = await prisma.user.count();
+
+        if (userCount > 0) {
+            res.status(403).json({ error: 'Cadastro inicial ja foi concluido.' });
+            return;
+        }
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -108,14 +114,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Create user
-        // SEGURANÇA: role sempre THERAPIST - não aceitar do body
+        // SEGURANÇA: role não vem do body. Apenas o primeiro cadastro inicializa o sistema.
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: 'THERAPIST',
+                role: 'ADMIN',
             },
         });
 
@@ -185,4 +190,3 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
     res.clearCookie('token');
     res.json({ message: 'Logged out successfully' });
 };
-
