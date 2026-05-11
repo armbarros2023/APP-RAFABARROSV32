@@ -37,6 +37,24 @@ const UserManagementPage = lazy(() => import('./pages/UserManagementPage'));
 const NewClientIntegrationPage = lazy(() => import('./pages/NewClientIntegrationPage'));
 const SystemManualPage = lazy(() => import('./pages/SystemManualPage'));
 
+const SPLASH_SEEN_KEY = 'equipe_rafael_barros_splash_seen';
+
+const shouldShowSplash = () => {
+  try {
+    return window.sessionStorage.getItem(SPLASH_SEEN_KEY) !== 'true';
+  } catch {
+    return true;
+  }
+};
+
+const markSplashSeen = () => {
+  try {
+    window.sessionStorage.setItem(SPLASH_SEEN_KEY, 'true');
+  } catch {
+    // Session storage can be unavailable in stricter browser contexts.
+  }
+};
+
 const navItems: NavItemType[] = [
   { path: '/dashboard', label: 'Painel Principal', icon: HomeIcon },
   {
@@ -263,15 +281,18 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [isSplashing, setIsSplashing] = useState(true);
+  const [isSplashing, setIsSplashing] = useState(shouldShowSplash);
 
   useEffect(() => {
+    if (!isSplashing) return;
+
     const timer = window.setTimeout(() => {
+      markSplashSeen();
       setIsSplashing(false);
-    }, 1800);
+    }, 900);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [isSplashing]);
 
   if (isSplashing) {
     return <SplashScreen />;

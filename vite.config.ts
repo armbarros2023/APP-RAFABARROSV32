@@ -20,6 +20,18 @@ export default defineConfig(({ mode }) => {
         react(),
         tailwindcss(),
       ],
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (!id.includes('node_modules')) return;
+              if (id.includes('recharts')) return 'charts';
+              if (id.includes('@fullcalendar')) return 'calendar';
+              if (id.includes('@tanstack')) return 'query-vendor';
+            },
+          },
+        },
+      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, './src'),
