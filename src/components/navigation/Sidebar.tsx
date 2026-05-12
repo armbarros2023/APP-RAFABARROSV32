@@ -74,27 +74,53 @@ interface CollapsibleNavMenuProps {
 
 const CollapsibleNavMenu: React.FC<CollapsibleNavMenuProps> = ({ item, openMenus, toggleMenu, onNavigate }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isChildActive = item.children?.some(child => child.path && location.pathname.startsWith(child.path)) ?? false;
   const isOpen = openMenus[item.label] === true;
+  const defaultPath = item.path ?? item.children?.find(child => child.path)?.path;
+
+  const handleOpenDefault = () => {
+    if (!defaultPath) {
+      toggleMenu(item.label);
+      return;
+    }
+
+    if (!isOpen) {
+      toggleMenu(item.label);
+    }
+    navigate(defaultPath);
+    onNavigate();
+  };
 
   return (
     <div className="space-y-1">
-      <button
-        onClick={() => toggleMenu(item.label)}
+      <div
         className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
           isChildActive
             ? 'border-white/18 bg-white/10 text-white'
             : 'border-transparent text-slate-200/90 hover:border-white/10 hover:bg-white/6 hover:text-white'
         }`}
       >
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleOpenDefault}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/6 text-slate-100">
             <item.icon className="h-5 w-5" />
           </span>
-          <span className="font-medium">{item.label}</span>
-        </div>
-        <ChevronDownIcon className={`h-5 w-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+          <span className="truncate font-medium">{item.label}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => toggleMenu(item.label)}
+          className="ml-2 rounded-xl p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+          aria-expanded={isOpen}
+          aria-label={`${isOpen ? 'Recolher' : 'Expandir'} ${item.label}`}
+        >
+          <ChevronDownIcon className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
       {isOpen && (
         <div className="space-y-1 pl-3">
           {item.children?.map(child => (

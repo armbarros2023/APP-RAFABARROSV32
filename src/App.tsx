@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './components/navigation/Sidebar';
+import Button from './components/ui/Button';
 import { NavItemType } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { useBranch } from './contexts/BranchContext';
@@ -15,7 +16,9 @@ import {
   FolderPlusIcon,
   HomeIcon,
   IdentificationIcon,
+  PlusCircleIcon,
   PresentationChartLineIcon,
+  PrinterIcon,
   UserGroupIcon,
   UsersIcon,
 } from './components/icons/HeroIcons';
@@ -87,39 +90,33 @@ const navItems: NavItemType[] = [
 const pageMeta = [
   {
     matcher: (pathname: string) => pathname.startsWith('/dashboard'),
-    eyebrow: 'Visao estrategica',
-    title: 'Painel principal da clinica',
-    description: 'Acompanhe agenda, desempenho financeiro e pontos de atencao em uma leitura mais clara e profissional.',
+    eyebrow: 'Painel',
+    title: 'Visao geral',
   },
   {
     matcher: (pathname: string) => pathname.startsWith('/alunos'),
-    eyebrow: 'Jornada do paciente',
-    title: 'Gestao de alunos e prontuarios',
-    description: 'Centralize cadastros, acompanhamento e dados clinicos com mais contexto visual.',
+    eyebrow: 'Pacientes',
+    title: 'Alunos e prontuarios',
   },
   {
     matcher: (pathname: string) => pathname.startsWith('/agenda-terapeuta'),
-    eyebrow: 'Ritmo assistencial',
-    title: 'Agenda e sessoes',
-    description: 'Organize a rotina terapeutica com foco em clareza, confirmacoes e proximos atendimentos.',
+    eyebrow: 'Agenda',
+    title: 'Sessoes',
   },
   {
     matcher: (pathname: string) => pathname.startsWith('/financeiro'),
-    eyebrow: 'Saude financeira',
-    title: 'Fluxo de caixa e operacao',
-    description: 'Veja receitas, despesas e previsoes em uma interface mais madura e confiavel.',
+    eyebrow: 'Financeiro',
+    title: 'Fluxo de caixa',
   },
   {
     matcher: (pathname: string) => pathname.startsWith('/usuarios'),
-    eyebrow: 'Governanca',
-    title: 'Usuarios, acessos e filiais',
-    description: 'Gerencie quem entra, quem opera e como cada unidade e organizada.',
+    eyebrow: 'Acessos',
+    title: 'Usuarios e filiais',
   },
   {
     matcher: (pathname: string) => pathname.startsWith('/manual'),
-    eyebrow: 'Referencia interna',
+    eyebrow: 'Referencia',
     title: 'Manual do sistema',
-    description: 'Consulte fluxos, orientacoes e detalhes tecnicos em um espaco dedicado.',
   },
 ];
 
@@ -133,8 +130,7 @@ const PageLoader = () => (
         </div>
       </div>
       <div>
-        <p className="font-display text-xl text-slate-900 dark:text-slate-50">Preparando ambiente clinico</p>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Estamos carregando os modulos da plataforma.</p>
+        <p className="font-display text-xl text-slate-900 dark:text-slate-50">Carregando</p>
       </div>
     </div>
   </div>
@@ -144,13 +140,14 @@ const AppShellHeader: React.FC<{ onOpenSidebar: () => void }> = ({ onOpenSidebar
   const { user } = useAuth();
   const { selectedBranch } = useBranch();
   const location = useLocation();
+  const navigate = useNavigate();
+  const isAdminDashboard = user?.role === 'ADMIN' && location.pathname.startsWith('/dashboard');
 
   const meta = useMemo(() => {
     return (
       pageMeta.find(item => item.matcher(location.pathname)) ?? {
-        eyebrow: 'Operacao integrada',
+        eyebrow: 'Clinica',
         title: 'Plataforma Equipe Rafael Barros',
-        description: 'Uma base visual mais clara para tornar a rotina da clinica mais fluida.',
       }
     );
   }, [location.pathname]);
@@ -167,9 +164,9 @@ const AppShellHeader: React.FC<{ onOpenSidebar: () => void }> = ({ onOpenSidebar
 
   return (
     <header className="sticky top-4 z-20">
-      <div className="glass-surface-strong relative overflow-hidden rounded-[30px] px-4 py-4 sm:px-6 sm:py-5">
-        <div className="soft-pattern absolute inset-0 opacity-30" />
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="glass-surface-strong relative overflow-hidden rounded-[28px] px-4 py-3 sm:px-5 sm:py-4">
+        <div className="soft-pattern absolute inset-0 opacity-20" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3">
             <button
               onClick={onOpenSidebar}
@@ -179,35 +176,63 @@ const AppShellHeader: React.FC<{ onOpenSidebar: () => void }> = ({ onOpenSidebar
               <Bars3Icon className="h-5 w-5" />
             </button>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">{meta.eyebrow}</p>
-              <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-[2.3rem]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">{meta.eyebrow}</p>
+              <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
                 {meta.title}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{meta.description}</p>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/45">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Hoje</p>
-              <p className="mt-2 text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{formattedDate}</p>
+            <div className="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/45">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Hoje</p>
+              <p className="mt-1 text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">{formattedDate}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/45">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Perfil</p>
-              <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/45">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Perfil</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {user?.role === 'ADMIN' ? 'Administrador' : 'Terapeuta'}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-primary to-secondary px-4 py-3 text-white shadow-[0_18px_30px_-22px_rgba(15,118,110,0.85)] dark:border-slate-800">
+            <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-primary to-secondary px-4 py-2.5 text-white shadow-[0_18px_30px_-22px_rgba(15,118,110,0.85)] dark:border-slate-800">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">Unidade</p>
-                  <p className="mt-2 text-sm font-semibold">{selectedBranch?.name || 'Selecione uma filial'}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">Unidade</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedBranch?.name || 'Sem filial'}</p>
                 </div>
                 <BellIcon className="h-5 w-5 text-white/85" />
               </div>
             </div>
           </div>
+
+          {isAdminDashboard && (
+            <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end xl:w-auto">
+              <Button
+                size="sm"
+                onClick={() => navigate('/alunos', { state: { openAddModal: true } })}
+                leftIcon={<PlusCircleIcon className="h-4 w-4" />}
+              >
+                Novo aluno
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => window.print()}
+                leftIcon={<PrinterIcon className="h-4 w-4" />}
+              >
+                Salvar PDF
+              </Button>
+              <button
+                type="button"
+                onClick={() => navigate('/agenda-terapeuta')}
+                className="inline-flex min-h-[38px] items-center gap-2 rounded-2xl border border-amber-200/80 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-700 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"
+              >
+                <BellIcon className="h-4 w-4" />
+                Pendencias
+                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">5</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

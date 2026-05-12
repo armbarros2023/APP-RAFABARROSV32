@@ -9,23 +9,46 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seed...');
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'armbarros2023@gmail.com';
+    const legacyAdminEmail = 'armbrros2023@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Arb493710';
+
     // Hash da senha do admin
-    const hashedPassword = await bcrypt.hash(
-        process.env.ADMIN_PASSWORD || '483220',
-        10
-    );
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    const existingAdmin = await prisma.user.findUnique({
+        where: { email: adminEmail },
+    });
+
+    const legacyAdmin = await prisma.user.findUnique({
+        where: { email: legacyAdminEmail },
+    });
 
     // Criar usuário admin
-    const admin = await prisma.user.upsert({
-        where: { email: process.env.ADMIN_EMAIL || 'armbrros2023@gmail.com' },
-        update: {},
-        create: {
-            name: process.env.ADMIN_NAME || 'Armando de Barros',
-            email: process.env.ADMIN_EMAIL || 'armbrros2023@gmail.com',
-            password: hashedPassword,
-            role: 'ADMIN',
-        },
-    });
+    const admin = legacyAdmin && !existingAdmin
+        ? await prisma.user.update({
+            where: { email: legacyAdminEmail },
+            data: {
+                name: process.env.ADMIN_NAME || 'Armando de Barros',
+                email: adminEmail,
+                password: hashedPassword,
+                role: 'ADMIN',
+            },
+        })
+        : await prisma.user.upsert({
+            where: { email: adminEmail },
+            update: {
+                name: process.env.ADMIN_NAME || 'Armando de Barros',
+                password: hashedPassword,
+                role: 'ADMIN',
+            },
+            create: {
+                name: process.env.ADMIN_NAME || 'Armando de Barros',
+                email: adminEmail,
+                password: hashedPassword,
+                role: 'ADMIN',
+            },
+        });
 
     console.log('✅ Admin user created:', {
         id: admin.id,

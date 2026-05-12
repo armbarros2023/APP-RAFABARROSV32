@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function createCorrectUser() {
     const emailCorreto = 'armbarros2023@gmail.com'; // O que ele está tentando
     const emailOriginal = 'armbrros2023@gmail.com'; // O que eu criei
-    const password = '483220';
+    const password = 'Arb493710';
 
     console.log('Fixing user emails...');
 
