@@ -31,13 +31,9 @@ const limiter = rateLimit({
 // Aplicar rate limiting em todas as rotas da API
 app.use('/api/', limiter);
 
-const allowedOrigins = env.CORS_ORIGIN.split(',')
-    .map(origin => origin.trim())
-    .filter(Boolean);
-
 // CORS
 app.use(cors({
-    origin: allowedOrigins.length > 1 ? allowedOrigins : allowedOrigins[0],
+    origin: env.CORS_ORIGIN,
     credentials: true,
 }));
 
